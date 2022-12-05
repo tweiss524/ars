@@ -127,7 +127,7 @@ initialize_Tk <- function(k, bounds, hprime, mu) {
     }
   }
   
-  Tk <- seq(bounds[1], bounds[2], length.out = k)
+  return(seq(bounds[1], bounds[2], length.out = k))
 }
 
 

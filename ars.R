@@ -118,7 +118,7 @@ ars <- function(f, n = 1000,
       }
     }
     
-    Tk <- seq(bounds[1], bounds[2], length.out = k)
+    return(seq(bounds[1], bounds[2], length.out = k))
   }
   
   u <- function(x, h, hprime) {
