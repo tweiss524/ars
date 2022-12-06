@@ -1,16 +1,15 @@
 
 ars <- function(f, n = 1000,
                 bounds = c(-Inf, Inf), k = 20,
-                x_init = 1, mu = 0) {
+                x_init = 1) {
   
   
-  
-  check_input <- function(f, n, bounds, k, mu) {
+  check_input <- function(f, n, bounds, k) {
     
     assertthat::assert_that(is.function(f), msg = "f must be a function")
     assertthat::assert_that(is.numeric(n), msg = "n must be an integer")
     #assertthat::assert_that(is.numeric(x_init), msg = "x_init must be an integer")
-    assertthat::assert_that(is.numeric(mu), msg = "mu must be numeric")
+  
     assertthat::assert_that(is.vector(bounds) && (length(bounds) == 2) && (is.numeric(bounds)), msg = "Bounds must be numeric vector of length 2")
     
     if (bounds[1] > bounds[2]) {
@@ -50,15 +49,18 @@ ars <- function(f, n = 1000,
   
   ###############################################################################
   
-  z <- function(x1, x2, h, hprime) {
+  calc_z <- function(x, h_tk, hprime_tk) {
+    n <- length(x)
+    x1 <- x[1:(n-1)]
+    x2 <- x[2:n]
     
-    return((h(x2) - h(x1) - x2 * hprime(x2) + x1* hprime(x1))/(hprime(x1)-hprime(x2)))
+    return((h_tk[2:n] - h_tk[1:(n-1)] - x[2:n] * hprime_tk[2:n] + x[1:(n-1)]* hprime_tk[1:(n-1)])/(hprime_tk[1:(n-1)]-hprime_tk[2:n]))
     
   }
   
   ########################################################################
   
-  initialize_Tk <- function(k, bounds, hprime, mu) {
+  initialize_Tk <- function(k, bounds, hprime) {
     
     if((bounds[1] == -Inf) && (bounds[2] == Inf)) {
       x <- mu - 10
@@ -121,15 +123,21 @@ ars <- function(f, n = 1000,
     return(seq(bounds[1], bounds[2], length.out = k))
   }
   
-  u <- function(x, h, hprime) {
+  u <- function(x, zk, Tk, h_Tk, hprime_Tk) {
+    j <- findInterval(x, zk) + 1
+    calc_u <- function(x){
+      u_result <- h_Tk[j] + (x-Tk[j])*hprime_Tk[j]
+      return(u_result)
+    }
     
+    return(calc_u(x))
     
     
     
   }
   
 ############### FUNCTION START ###########################################
-  check_input(f, n, bounds, k, mu)
+  check_input(f, n, bounds, k)
   
   n <- as.integer(n)
   x_init <- as.integer(x_init)
@@ -152,7 +160,7 @@ ars <- function(f, n = 1000,
   
   # INITIALIZING STEP
   
-  Tk <- initialize_Tk(k, bounds, hprime, mu)
+  Tk <- initialize_Tk(k, bounds, hprime)
   
   num_samps <- 1
   
@@ -160,6 +168,11 @@ ars <- function(f, n = 1000,
   h_Tk <- sapply(Tk, h)
   hprime_Tk <- sapply(Tk, hprime)
   check_log_concave(hprime_Tk)
+  
+  zk <- calc_z(Tk, h_Tk, hprime_Tk)
+  
+  uk <- u(48.25, zk, Tk, h_Tk, hprime_Tk)
+  print(uk)
   
   return(Tk)
   
@@ -169,4 +182,4 @@ f <- function(x, mean = 50, sigma = 1) {
   1/sqrt(2*pi*sigma^2)*exp(-1/2*(x-mean)^2/(sigma^2))
 }
 
-ars(f = f, n = 1000, bounds = c(47, 50), mu = 50)
+ars(f = f, n = 1000, bounds = c(47, 55))
