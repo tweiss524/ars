@@ -60,7 +60,7 @@ ars <- function(f, n = 1000,
   
   ########################################################################
   
-  initialize_Tk <- function(k, bounds, hprime) {
+  initialize_abcissae <- function(k, bounds, hprime) {
     
     if((bounds[1] == -Inf) && (bounds[2] == Inf)) {
       x <- mu - 10
@@ -129,11 +129,40 @@ ars <- function(f, n = 1000,
       u_result <- h_Tk[j] + (x-Tk[j])*hprime_Tk[j]
       return(u_result)
     }
-    
     return(calc_u(x))
-    
-    
-    
+  }
+  #   
+  # l <- function(x, Tk, h_tk, hprime_Tk) {
+  #   n <- length(Tk)
+  #   calc_l <- function(x) {
+  #     l_result <- ((Tk[2:n] - x) * h_Tk[1:(n-1)] + (x - Tk[1:(n-1)]) * h_Tk[2:n]) / (Tk[2:n] - Tk[1:(n-1)])
+  #     return(l_result)
+  #   }
+  #   return(calc_l)
+  # }
+  
+  
+  l <- function(x, Tk, h_Tk, hprime_Tk) {
+    j <- findInterval(x, Tk)
+    if( (j == 0) || (j == length(Tk)) ) {
+      return(-Inf)
+    } else {
+      calc_l <- function(x) {
+        l_result <- ((Tk[j+1] - x) * h_Tk[j] + (x - Tk[j]) * h_Tk[j+1]) / (Tk[j+1] - Tk[j])
+        return(l_result)
+      }
+      
+      return(calc_l(x))
+      
+    }
+  }
+  
+  ### outline: come back to this later
+  s <- function(x, u_out, u_out_prime) {
+    calc_s <- function(x){
+      return(u_out / u_out_prime)
+    }
+    return(calc_s(x))
   }
   
 ############### FUNCTION START ###########################################
@@ -157,13 +186,14 @@ ars <- function(f, n = 1000,
     return(der)
   }
   
+  # initializing sample vector
+  samps <- rep(NA, n)
   
   # INITIALIZING STEP
   
-  Tk <- initialize_Tk(k, bounds, hprime)
+  Tk <- initialize_abcissae(k, bounds, hprime)
   
   num_samps <- 1
-  
   
   h_Tk <- sapply(Tk, h)
   hprime_Tk <- sapply(Tk, hprime)
@@ -171,10 +201,46 @@ ars <- function(f, n = 1000,
   
   zk <- calc_z(Tk, h_Tk, hprime_Tk)
   
-  uk <- u(48.25, zk, Tk, h_Tk, hprime_Tk)
-  print(uk)
   
-  return(Tk)
+  ### SAMPLING STEP
+  while(num_samps <= n) {
+    
+    xstar <- "sample from s"
+    w <- runif(1)
+    
+    # squeezing test
+    if(w <= exp(l(xstar) - u(xstar))) {
+      
+      samps[num_samps] <- xstar
+      num_samps <- num_samps + 1
+    }
+    
+    # rejection test
+    else if (w <= exp(h(xstar) - u(xstar))) {
+      samps[num_samps] <- xstar
+      num_samps <- num_samps + 1
+    }
+    
+    ### UPDATING STEP
+    else {
+      h_xstar <- h(xstar)
+      hprime_xstar <- hprime(xstar)
+      Tk <- sort(c(Tk, xstar))
+      
+      # not sure if this stuff is right
+      h_Tk <- append(h_Tk, h_star, after = Tk[xstar] - 1)
+      hprime_Tk <- append(hprime_Tk, hprime_xstar, after = Tk[xstar] - 1)
+      
+      #### construct u_k+1(x), s, l and increment k: k <- k + 1
+      
+      
+      ### at some point in this loop, also check log-concavity
+    }
+    
+    
+  }
+  
+  return(samps)
   
 }
 f <- function(x, mean = 50, sigma = 1) {
