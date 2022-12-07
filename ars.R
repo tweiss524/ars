@@ -178,6 +178,35 @@ ars <- function(f, n = 1000,
     return(s_Tk)
   }
   
+  calc_probs <- function(Tk, zk, h_Tk, hprime_Tk) {
+    
+    z_all <- c(bounds[1],zk,bounds[2])
+    z_plus_one <- z_all[2:length(z_all)]
+    z_start <- z_all[1:num_bins]
+    
+    num_bins <- length(z_all) - 1
+    cdf_vals <- numeric(num_bins)
+    
+    cdf_vals <- exp(h_Tk)/hprime_Tk * (exp(z_plus_one*hprime_Tk) - exp(z_start*hprime_Tk))
+    
+    normalizingConstant <- sum(cdf_vals)
+    
+    return(cdf_vals/normalizingConstant)
+  }
+  
+  sample_sk <- function(Tk, zk, h_Tk, hprime_Tk) {
+    
+    z_all <- c(bounds[1],zk,bounds[2])
+    probs <- calc_probs(Tk, zk, h_Tk, hprime_Tk)
+    
+    j <- sample(length(probs), size = 1, prob = probs)
+    u <- runif(1)
+    x_star <- (1/hprime_Tk[j]) * log(u * (exp(hprime_Tk[j]*z_all[j+1]) - exp(hprime_Tk[j]*z_all[j]))
+                                     + exp(hprime_Tk[j]*z_all[j]))
+    
+    return(x_star)
+  }
+  
   
 ############### FUNCTION START ###########################################
   check_input(f, n, bounds, k)
