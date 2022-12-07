@@ -180,12 +180,11 @@ ars <- function(f, n = 1000,
   
   calc_probs <- function(Tk, zk, h_Tk, hprime_Tk) {
     
-    z_all <- c(bounds[1],zk,bounds[2])
+    z_all <- c(bounds[1], zk, bounds[2])
     z_plus_one <- z_all[2:length(z_all)]
-    z_start <- z_all[1:num_bins]
-    
     num_bins <- length(z_all) - 1
-    cdf_vals <- numeric(num_bins)
+    cdf_vals <- rep(0, num_bins)
+    z_start <- z_all[1:num_bins]
     
     cdf_vals <- exp(h_Tk)/hprime_Tk * (exp(z_plus_one*hprime_Tk) - exp(z_start*hprime_Tk))
     
@@ -196,7 +195,7 @@ ars <- function(f, n = 1000,
   
   sample_sk <- function(Tk, zk, h_Tk, hprime_Tk) {
     
-    z_all <- c(bounds[1],zk,bounds[2])
+    z_all <- c(bounds[1], zk, bounds[2])
     probs <- calc_probs(Tk, zk, h_Tk, hprime_Tk)
     
     j <- sample(length(probs), size = 1, prob = probs)
@@ -244,10 +243,17 @@ ars <- function(f, n = 1000,
   
   zk <- calc_z(Tk, h_Tk, hprime_Tk)
   
+  # for debugging
+  #else_count <- 0
+  
   ### SAMPLING STEP
-  while(num_samps <= n) {
+  while(num_samps <= 1000) {
     
-    xstar <- sample(bounds[1]:bounds[2], 1, replace = T)
+    # real xstar
+    #xstar <- sample_sk(Tk, zk, h_Tk, hprime_Tk)
+    
+    # temporary xstar
+    xstar <- sample(bounds[1]:bounds[2], 1)
     
     #### check that xstar in bounds[1], bounds[2]
     
@@ -268,6 +274,7 @@ ars <- function(f, n = 1000,
     
     ### UPDATING STEP
     else {
+      #else_count <- else_count + 1
       h_xstar <- h(xstar)
       hprime_xstar <- hprime(xstar)
       Tk <- sort(c(Tk, xstar))
@@ -275,6 +282,9 @@ ars <- function(f, n = 1000,
       # not sure if this stuff is right
       h_Tk <- append(h_Tk, h_xstar, after = (which(Tk == xstar) - 1))
       hprime_Tk <- append(hprime_Tk, hprime_xstar, after = (which(Tk == xstar) - 1))
+      
+      # for debugging later
+      #print(else_count)
       
       #### construct u_k+1(x), s, l and increment k: k <- k + 1
       
