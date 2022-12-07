@@ -158,12 +158,26 @@ ars <- function(f, n = 1000,
   }
   
   ### outline: come back to this later
-  s <- function(x, u_out, u_out_prime) {
+  s <- function(x, xk, Tk, h_Tk, hprime_Tk) {
     calc_s <- function(x){
       return(u_out / u_out_prime)
     }
-    return(calc_s(x))
+    return(calc_s)
   }
+  
+  s_new <- function(x, zk, Tk, h_Tk, hprime_Tk) {
+    j <- findInterval(x, zk) + 1
+    s_numer <- function(x) {
+      exp(h_Tk[j] + (x-Tk[j])*hprime_Tk[j])
+    }
+    s_int <- integrate(s_numer, lower = zk[j-1], upper = zk[j])$value
+    
+    s_Tk <- function(x){
+      (exp(h_Tk[j] + (x-Tk[j])*hprime_Tk[j])) / s_int
+    }
+    return(s_Tk)
+  }
+  
   
 ############### FUNCTION START ###########################################
   check_input(f, n, bounds, k)
@@ -201,22 +215,24 @@ ars <- function(f, n = 1000,
   
   zk <- calc_z(Tk, h_Tk, hprime_Tk)
   
-  
   ### SAMPLING STEP
   while(num_samps <= n) {
     
-    xstar <- "sample from s"
+    xstar <- sample(bounds[1]:bounds[2], 1, replace = T)
+    
+    #### check that xstar in bounds[1], bounds[2]
+    
     w <- runif(1)
     
     # squeezing test
-    if(w <= exp(l(xstar) - u(xstar))) {
+    if(w <= exp(l(xstar, Tk, h_Tk, hprime_Tk) - u(xstar, zk, Tk, h_Tk, hprime_Tk))) {
       
       samps[num_samps] <- xstar
       num_samps <- num_samps + 1
     }
     
     # rejection test
-    else if (w <= exp(h(xstar) - u(xstar))) {
+    else if (w <= exp(h(xstar) - u(xstar, zk, Tk, h_Tk, hprime_Tk))) {
       samps[num_samps] <- xstar
       num_samps <- num_samps + 1
     }
@@ -228,8 +244,8 @@ ars <- function(f, n = 1000,
       Tk <- sort(c(Tk, xstar))
       
       # not sure if this stuff is right
-      h_Tk <- append(h_Tk, h_star, after = Tk[xstar] - 1)
-      hprime_Tk <- append(hprime_Tk, hprime_xstar, after = Tk[xstar] - 1)
+      h_Tk <- append(h_Tk, h_xstar, after = (which(Tk == xstar) - 1))
+      hprime_Tk <- append(hprime_Tk, hprime_xstar, after = (which(Tk == xstar) - 1))
       
       #### construct u_k+1(x), s, l and increment k: k <- k + 1
       
@@ -243,9 +259,15 @@ ars <- function(f, n = 1000,
   return(samps)
   
 }
-f <- function(x, mean = 50, sigma = 1) {
+
+
+
+
+f <- function(x, mean = 55, sigma = 1) {
   
   1/sqrt(2*pi*sigma^2)*exp(-1/2*(x-mean)^2/(sigma^2))
 }
 
-ars(f = f, n = 1000, bounds = c(47, 55))
+test <- ars(f = f, n = 1000, bounds = c(45, 55))
+
+hist(test)
