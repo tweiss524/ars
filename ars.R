@@ -400,7 +400,7 @@ hist(ars(f = dgamma, n = 1000, bounds = c(1,10), shape = 9), freq = F)
 # 
 # 
 # # testing with gamma
-# test <- ars(f = dgamma, n = 1000,  bounds = c(1,10), x_init = 5, shape = 9, rate = 2)
+#test <- ars(f = dgamma, n = 1000,  bounds = c(0,10), x_init = 5, shape = 9, rate = 2)
 # 
 # hist(test, freq = F)
 # curve(dgamma(x, 9, 2), 1, 10, add = TRUE, col = "red")
@@ -415,12 +415,18 @@ hist(ars(f = dgamma, n = 1000, bounds = c(1,10), shape = 9), freq = F)
 # # testing with unif
 # test <- ars(f = dnorm, n = 1000,  bounds = c(0,Inf), x_init = 1)
 # 
-test <- ars(f = dnorm, n = 1000, bounds = c(10, 15), min = 10, max = 15, x_init = 11)
-hist(test, freq = F)
+# test <- ars(f = dnorm, n = 1000, bounds = c(10, 15), min = 10, max = 15, x_init = 11)
+# hist(test, freq = F)
 
-test <- ars(f = dnorm, n = 1000, bounds = c(0,1), x_init = 0.5)
-hist(test, freq = F)
+# test <- ars(f = dnorm, n = 1000, bounds = c(0,1), x_init = 0.5)
+# hist(test, freq = F)
 
 
-test <- ars(f = dbeta, n = 1000, bounds = c(0,1), x_init = 0.5, shape1 = 3, shape2 = 4)
+test <- ars(f = dunif, n = 1000, bounds = c(10,15), x_init = 11, min = 10, max = 15)
 hist(test, freq = F)
+curve(dbeta(x, 3, 4), 0.01, .99, add = TRUE, col = "red")
+
+
+
+
+####
