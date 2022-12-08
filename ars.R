@@ -226,11 +226,8 @@ ars <- function(f, n = 1000,
   ### SAMPLING STEP
   while(num_samps <= n) {
     
-    # real xstar
+    # sample xstar from sk
     xstar <- sample_sk(Tk, zk, h_Tk, hprime_Tk)
-    
-    # temporary xstar
-    #xstar <- sample(seq(bounds[1], bounds[2], by = 0.01), 1)
     
     assertthat::assert_that((xstar >= bounds[1]) && (xstar <= bounds[2]), msg = "xstar not in bounds")
     zk <- sort(zk)
@@ -245,53 +242,31 @@ ars <- function(f, n = 1000,
     }
     
     # rejection test
-    else if (w <= exp(h(xstar) - u(xstar, zk, Tk, h_Tk, hprime_Tk))) {
-      samps[num_samps] <- xstar
-      num_samps <- num_samps + 1
-      
-      h_xstar <- h(xstar)
-      hprime_xstar <- hprime(xstar)
-      Tk <- sort(c(Tk, xstar))
-      
-      h_Tk <- append(h_Tk, h_xstar, after = (which(Tk == xstar) - 1))
-      hprime_Tk <- append(hprime_Tk, hprime_xstar, after = (which(Tk == xstar) - 1))
-      
-      zk <- calc_z(Tk, h_Tk, hprime_Tk)
-    }
-    
-    ### UPDATING STEP
     else {
+      
       h_xstar <- h(xstar)
       hprime_xstar <- hprime(xstar)
+      
+      if (w <= exp(h_xstar - u(xstar, zk, Tk, h_Tk, hprime_Tk))) {
+        samps[num_samps] <- xstar
+        num_samps <- num_samps + 1
+      }
+      
       Tk <- sort(c(Tk, xstar))
-     
+      
       h_Tk <- append(h_Tk, h_xstar, after = (which(Tk == xstar) - 1))
       hprime_Tk <- append(hprime_Tk, hprime_xstar, after = (which(Tk == xstar) - 1))
       
+      check_log_concave(hprime_Tk)
+      
       zk <- calc_z(Tk, h_Tk, hprime_Tk)
       
-      ### at some point in this loop, also check log-concavity
-    }
+      } # end else
+    } # end while
     
-    
-  }
-  
   return(samps)
-  
 }
 
-f <- function(x, mean = 50, sigma = 1) {
-  
-  1/sqrt(2*pi*sigma^2)*exp(-1/2*(x-mean)^2/(sigma^2))
-}
-
-
-gam <- function(x, alp=9, bet=2) {
-  if (x > 0){
-    return(bet^alp/gamma(alp) * x^(alp - 1) * exp(-x*bet))
-  } else {return(0)}
-  
-}
 
 # testing with normal
 test <- ars(f = dnorm, n = 1000, bounds = c(45,55),  x_init = 47, mean = 50)
@@ -301,9 +276,13 @@ curve(dnorm(x, 50, 1), 45, 55, add = TRUE, col = "red")
 
 
 # testing with gamma
-test <- ars(f = dgamma, n = 1000,  bounds = c(1,10), x_init = 1, shape = 9, rate = 2)
+test <- ars(f = dgamma, n = 1000,  bounds = c(1,10), x_init = 5, shape = 9, rate = 2)
 
 hist(test, freq = F)
 curve(dgamma(x, 9, 2), 1, 10, add = TRUE, col = "red")
+
+
+# testing with unif
+test <- ars(f = dunif, n = 1000,  bounds = c(0,1), x_init = 0.5)
 
 
