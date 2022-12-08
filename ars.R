@@ -149,24 +149,23 @@ ars <- function(f, n = 1000,
     
     z_all <- c(bounds[1], zk, bounds[2])
     num_bins <- length(z_all) - 1
-    cdf_vals <- rep(0, num_bins)
     
-    z_plus_one <- z_all[2:length(z_all)]
-    z_start <- z_all[1:num_bins]
+    z_2 <- z_all[2:length(z_all)]
+    z_1 <- z_all[1:num_bins]
     
     s <- exp(h_Tk - hprime_Tk*Tk)
-    s[which(is.infinite(s))] <- 0
-    s[which(is.na(s))] <- 0
+    s[is.infinite(s) | is.na(s)] <- 0
     
-    cdf_vals <- ifelse(s==0, (s/hprime_Tk) * (exp(z_plus_one*(hprime_Tk)) - exp(z_start*(hprime_Tk))), 
-                       z_plus_one-z_start)
+    cdf_vals <- c()
+    cdf_vals[s!=0] <- (s/hprime_Tk) * (exp(z_2*(hprime_Tk)) - exp(z_1*(hprime_Tk))) 
+    cdf_vals[s!=0] <- z_2 - z_1
     
     normalizing_constant <- sum(cdf_vals)
     normalized_b <- s/normalizing_constant
     
     weighted_prob <- c()
-    weighted_prob[s!=0] <- normalized_b/hprime_Tk*(exp(hprime_Tk*z_plus_one) - exp(hprime_Tk*z_start))
-    weighted_prob[s==0] <- normalized_b*(z_plus_one-z_start)
+    weighted_prob[s!=0] <- normalized_b/hprime_Tk*(exp(hprime_Tk*z_2) - exp(hprime_Tk*z_1))
+    weighted_prob[s==0] <- normalized_b*(z_2-z_1)
     return(list(normalized_b, weighted_prob))
   }
   
@@ -180,7 +179,8 @@ ars <- function(f, n = 1000,
     
     i <- sample(length(prob), size = 1, prob = prob)
     u <- runif(1)
-    x_star <- (1/hprime_Tk[i]) * log(u * (hprime_Tk[i]*prob[i]/b[i])+ exp(hprime_Tk[i]*z_all[i]))
+    x_star <- ifelse(hprime_Tk[i] == 0, z_all[i]+prob[i]*u/b[i],
+                     (1/hprime_Tk[i]) * log(u * (hprime_Tk[i]*prob[i]/b[i])+ exp(hprime_Tk[i]*z_all[i])))
     
     return(x_star)
   }
@@ -281,6 +281,9 @@ test <- ars(f = dgamma, n = 1000,  bounds = c(1,10), x_init = 5, shape = 9, rate
 hist(test, freq = F)
 curve(dgamma(x, 9, 2), 1, 10, add = TRUE, col = "red")
 
+
+# testing with logistics
+test <- ars(f = dlogis, n = 1000,  bounds = c(0,10), x_init = 0.5)
 
 # testing with unif
 test <- ars(f = dunif, n = 1000,  bounds = c(0,1), x_init = 0.5)
