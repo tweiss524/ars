@@ -334,6 +334,10 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = 1, k = 20, ...) {
   print(var(hprime_Tk))
   check_log_concave(hprime_Tk)
   
+  # Tk <- Tk[is.finite(h_Tk)]
+  # h_Tk <- h_Tk[is.finite(h_Tk)]
+  # hprime_Tk <- hprime_Tk[is.finite(h_Tk)]
+  
   zk <- calc_z(Tk, h_Tk, hprime_Tk)
   zk[is.na(zk)] <- 0
   print(zk)
@@ -344,12 +348,12 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = 1, k = 20, ...) {
     
     # sample xstar from sk
     xstar <- sample_sk(Tk, zk, h_Tk, hprime_Tk)
-    print(xstar)
-    print(paste("l:", l(xstar, Tk, h_Tk, hprime_Tk) ))
-    print(paste("h:", h(xstar)))
-    print(zk)
-    print(Tk)
-    print(paste("u", u(xstar, zk, Tk, h_Tk, hprime_Tk)))
+    # print(xstar)
+    # print(paste("l:", l(xstar, Tk, h_Tk, hprime_Tk) ))
+    # print(paste("h:", h(xstar)))
+    # print(zk)
+    # print(Tk)
+    # print(paste("u", u(xstar, zk, Tk, h_Tk, hprime_Tk)))
     assertthat::assert_that((xstar >= bounds[1]) && (xstar <= bounds[2]), msg = "xstar not in bounds")
     #zk <- sort(zk)
     assertthat::assert_that((l(xstar, Tk, h_Tk, hprime_Tk) <= h(xstar)) && (h(xstar) <= u(xstar, zk, Tk, h_Tk, hprime_Tk)), msg = "lhu test: Not log concave")
@@ -425,6 +429,8 @@ hist(ars(f = dgamma, n = 1000, bounds = c(1,10), shape = 9), freq = F)
 
 test <- ars(f = dunif, n = 1000, bounds = c(10,15), x_init = 11, min = 10, max = 15)
 hist(test, freq = F)
+
+test <- ars(f = dbeta, n = 1000, bounds = c(0,1), x_init = 0.5, shape1 = 3, shape2 = 4)
 curve(dbeta(x, 3, 4), 0.01, .99, add = TRUE, col = "red")
 
 
