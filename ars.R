@@ -180,31 +180,44 @@ ars <- function(f, n = 1000,
   
   calc_probs <- function(Tk, zk, h_Tk, hprime_Tk) {
     
+    
     z_all <- c(bounds[1], zk, bounds[2])
-    z_plus_one <- z_all[2:length(z_all)]
     num_bins <- length(z_all) - 1
     cdf_vals <- rep(0, num_bins)
+    
+    z_plus_one <- z_all[2:length(z_all)]
     z_start <- z_all[1:num_bins]
     
-    cdf_vals <- exp(h_Tk)/hprime_Tk * (exp(z_plus_one*hprime_Tk) - exp(z_start*hprime_Tk))
+    s <- exp(h_Tk - hprime_Tk*Tk)
+    s[which(is.infinite(s))] <- 0
+    s[which(is.na(s))] <- 0
     
-    normalizingConstant <- sum(cdf_vals)
+    cdf_vals <- ifelse(s==0, (s/hprime_Tk) * (exp(z_plus_one*(hprime_Tk)) - exp(z_start*(hprime_Tk))), 
+                       z_plus_one-z_start)
     
-    return(cdf_vals/normalizingConstant)
+    normalizing_constant <- sum(cdf_vals)
+    normalized_b <- s/normalizing_constant
+    
+    weighted_prob <- c()
+    weighted_prob[s!=0] <- normalized_b/hprime_Tk*(exp(hprime_Tk*z_plus_one) - exp(hprime_Tk*z_start))
+    weighted_prob[s==0] <- normalized_b*(z_plus_one-z_start)
+    return(list(normalized_b,weighted_prob))
   }
   
   sample_sk <- function(Tk, zk, h_Tk, hprime_Tk) {
     
     z_all <- c(bounds[1], zk, bounds[2])
-    probs <- calc_probs(Tk, zk, h_Tk, hprime_Tk)
     
-    j <- sample(length(probs), size = 1, prob = probs)
+    b <- calc_probs(Tk, zk, h_Tk, hprime_Tk)[[1]]
+    prob <- calc_probs(Tk, zk, h_Tk, hprime_Tk)[[2]]
+    
+    i <- sample(length(prob), size = 1, prob = prob)
     u <- runif(1)
-    x_star <- (1/hprime_Tk[j]) * log(u * (exp(hprime_Tk[j]*z_all[j+1]) - exp(hprime_Tk[j]*z_all[j]))
-                                     + exp(hprime_Tk[j]*z_all[j]))
+    x_star <- (1/hprime_Tk[i]) * log(u * (hprime_Tk[i]*prob[i]/b[i])+ exp(hprime_Tk[i]*z_all[i]))
     
     return(x_star)
   }
+  
   
   
 ############### FUNCTION START ###########################################
