@@ -1,7 +1,7 @@
 
 ars <- function(f, n = 1000,
                 bounds = c(-Inf, Inf), k = 20,
-                x_init = 1) {
+                x_init = 1, ...) {
   
   assertthat::assert_that(is.function(f), msg = "f must be a function")
   assertthat::assert_that(is.numeric(n), msg = "n must be an integer")
@@ -196,9 +196,9 @@ ars <- function(f, n = 1000,
   
   h <- function(x) {
     
-    logf <- log(f(x))
+    logf <- log(f(x, ...))
     assertthat::assert_that(is.finite(logf), msg = sprintf("Invalid Bounds case logf: %s.", x))
-    return(log(f(x)))
+    return(logf)
   }
   
   
@@ -294,14 +294,14 @@ gam <- function(x, alp=9, bet=2) {
 }
 
 # testing with normal
-test <- ars(f = f, n = 1000, x_init = 47, bounds = c(45,55))
+test <- ars(f = dnorm, n = 1000, bounds = c(45,55),  x_init = 47, mean = 50)
 
 hist(test, freq = F)
 curve(dnorm(x, 50, 1), 45, 55, add = TRUE, col = "red")
 
 
 # testing with gamma
-test <- ars(f = gam, n = 1000, x_init = 1, bounds = c(1,10))
+test <- ars(f = dgamma, n = 1000,  bounds = c(1,10), x_init = 1, shape = 9, rate = 2)
 
 hist(test, freq = F)
 curve(dgamma(x, 9, 2), 1, 10, add = TRUE, col = "red")
