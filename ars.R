@@ -278,9 +278,10 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = 1, k = 20, ...) {
     
     b <- calc_probs(Tk, zk, h_Tk, hprime_Tk)[[1]]
     prob <- calc_probs(Tk, zk, h_Tk, hprime_Tk)[[2]]
-    prob[(prob <= 0) | (is.na(prob))] <- 0
+    #prob[(prob <= 0) | (is.na(prob))] <- 0
     #print(b)
-    #print(prob)
+    print("Probs:")
+    print(prob)
     i <- sample(length(prob), size = 1, prob = prob)
     u <- runif(1)
     x_star <- ifelse(hprime_Tk[i] == 0, z_all[i]+prob[i]*u/b[i],
