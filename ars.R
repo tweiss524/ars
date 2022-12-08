@@ -3,40 +3,34 @@ ars <- function(f, n = 1000,
                 bounds = c(-Inf, Inf), k = 20,
                 x_init = 1) {
   
+  assertthat::assert_that(is.function(f), msg = "f must be a function")
+  assertthat::assert_that(is.numeric(n), msg = "n must be an integer")
+  assertthat::assert_that(is.numeric(x_init), msg = "x_init must be an integer")
   
-  check_input <- function(f, n, bounds, k) {
-    
-    assertthat::assert_that(is.function(f), msg = "f must be a function")
-    assertthat::assert_that(is.numeric(n), msg = "n must be an integer")
-    #assertthat::assert_that(is.numeric(x_init), msg = "x_init must be an integer")
+  assertthat::assert_that(is.vector(bounds) && (length(bounds) == 2) && (is.numeric(bounds)), msg = "Bounds must be numeric vector of length 2")
   
-    assertthat::assert_that(is.vector(bounds) && (length(bounds) == 2) && (is.numeric(bounds)), msg = "Bounds must be numeric vector of length 2")
+  if (bounds[1] > bounds[2]) {
     
-    if (bounds[1] > bounds[2]) {
-      
-      bounds <<- sort(bounds)
-      bounds <- sort(bounds)
-      
-      warning(paste0("Lower bound must be smaller than upper bound. ", 
-                     sprintf("New bounds are (%s, %s)", bounds[1], bounds[2])))
-      
-    }
+    bounds <- c(bounds[2], bounds[1])
     
-    if (bounds[1] == bounds[2]) {
-      
-      bounds <<- c(-Inf, Inf)
-      bounds <- c(-Inf, Inf)
-      
-      warning(paste0("Lower bound must be smaller than upper bound. ", 
-                     sprintf("New bounds are (%s, %s)", bounds[1], bounds[2])))
-      
-    }
-    
-    assertthat::assert_that((is.numeric(k)) && (k > 0), msg = "k must be a positive integer")
-    
-    #assertthat::assert_that((x_init >= bounds[1]) && (x_init <= bounds[2]), msg = "Inital point must be inside bounds")
+    warning(paste0("Lower bound must be smaller than upper bound. ", 
+                   sprintf("New bounds are (%s, %s)", bounds[1], bounds[2])))
     
   }
+  
+  if (bounds[1] == bounds[2]) {
+    
+    bounds <- c(-Inf, Inf)
+    
+    warning(paste0("Lower bound must be smaller than upper bound. ", 
+                   sprintf("New bounds are (%s, %s)", bounds[1], bounds[2])))
+    
+  }
+  
+  assertthat::assert_that((is.numeric(k)) && (k > 0), msg = "k must be a positive integer")
+  
+  assertthat::assert_that((x_init >= bounds[1]) && (x_init <= bounds[2]), msg = "x_init must be inside bounds")
+  
   
   ################################################################################
   
@@ -49,22 +43,20 @@ ars <- function(f, n = 1000,
   
   ###############################################################################
   
-  calc_z <- function(x, h_tk, hprime_tk) {
-    n <- length(x)
-    x1 <- x[1:(n-1)]
-    x2 <- x[2:n]
+  calc_z <- function(tk, h_tk, hprime_tk) {
+    n <- length(tk)
     
-    return((h_tk[2:n] - h_tk[1:(n-1)] - x[2:n] * hprime_tk[2:n] + x[1:(n-1)]* hprime_tk[1:(n-1)])/(hprime_tk[1:(n-1)]-hprime_tk[2:n]))
+    return((h_tk[2:n] - h_tk[1:(n-1)] - tk[2:n] * hprime_tk[2:n] + tk[1:(n-1)]* hprime_tk[1:(n-1)])/(hprime_tk[1:(n-1)]-hprime_tk[2:n]))
     
   }
   
   ########################################################################
   
-  initialize_abcissae <- function(k, bounds, hprime) {
+  initialize_abcissae <- function(x_init, k, hprime, bounds) {
     
     if((bounds[1] == -Inf) && (bounds[2] == Inf)) {
-      x <- mu - 10
-      y <- mu + 10
+      x <- x_init - 10
+      y <- x_init + 10
       
       while((!is.finite(hprime(x))) && (!is.finite(hprime(y)))) {
         x <- x + 1
@@ -78,12 +70,14 @@ ars <- function(f, n = 1000,
       
       bounds[1] <- x
       bounds[2] <- y
+      bounds[1] <<- x
+      bounds[2] <<- y
       
     }
     
     if((bounds[1] == -Inf) && (bounds[2] != Inf)) {
       
-      x <- bounds[2] - 20
+      x <- bounds[2] - 10
       
       while((hprime(x) <= 0) && (hprime(x) != Inf) && (x < bounds[2])) {
         x <- x + 1
@@ -94,12 +88,13 @@ ars <- function(f, n = 1000,
       }
       
       bounds[1] <- x
+      bounds[1] <<- x
       
     }
     
     if((bounds[1] != -Inf) && (bounds[2] == Inf)) {
       
-      y <- bounds[1] + 20
+      y <- bounds[1] + 10
       
       while((hprime(y) >= 0) && (hprime(y) != -Inf) && (y > bounds[1])) {
         y <- y - 1
@@ -108,8 +103,9 @@ ars <- function(f, n = 1000,
       if((hprime(y) == -Inf) | (y <= bounds[1])) {
         stop("Invalid Bounds case (x, Inf).")
       }
-      
+  
       bounds[2] <- y
+      bounds[2] <<- y
       
     }
     
@@ -131,15 +127,6 @@ ars <- function(f, n = 1000,
     }
     return(calc_u(x))
   }
-  #   
-  # l <- function(x, Tk, h_tk, hprime_Tk) {
-  #   n <- length(Tk)
-  #   calc_l <- function(x) {
-  #     l_result <- ((Tk[2:n] - x) * h_Tk[1:(n-1)] + (x - Tk[1:(n-1)]) * h_Tk[2:n]) / (Tk[2:n] - Tk[1:(n-1)])
-  #     return(l_result)
-  #   }
-  #   return(calc_l)
-  # }
   
   
   l <- function(x, Tk, h_Tk, hprime_Tk) {
@@ -155,27 +142,6 @@ ars <- function(f, n = 1000,
       return(calc_l(x))
       
     }
-  }
-  
-  ### outline: come back to this later
-  s <- function(x, xk, Tk, h_Tk, hprime_Tk) {
-    calc_s <- function(x){
-      return(u_out / u_out_prime)
-    }
-    return(calc_s)
-  }
-  
-  s_new <- function(x, zk, Tk, h_Tk, hprime_Tk) {
-    j <- findInterval(x, zk) + 1
-    s_numer <- function(x) {
-      exp(h_Tk[j] + (x-Tk[j])*hprime_Tk[j])
-    }
-    s_int <- integrate(s_numer, lower = zk[j-1], upper = zk[j])$value
-    
-    s_Tk <- function(x){
-      (exp(h_Tk[j] + (x-Tk[j])*hprime_Tk[j])) / s_int
-    }
-    return(s_Tk)
   }
   
   calc_probs <- function(Tk, zk, h_Tk, hprime_Tk) {
@@ -201,7 +167,7 @@ ars <- function(f, n = 1000,
     weighted_prob <- c()
     weighted_prob[s!=0] <- normalized_b/hprime_Tk*(exp(hprime_Tk*z_plus_one) - exp(hprime_Tk*z_start))
     weighted_prob[s==0] <- normalized_b*(z_plus_one-z_start)
-    return(list(normalized_b,weighted_prob))
+    return(list(normalized_b, weighted_prob))
   }
   
   sample_sk <- function(Tk, zk, h_Tk, hprime_Tk) {
@@ -210,6 +176,7 @@ ars <- function(f, n = 1000,
     
     b <- calc_probs(Tk, zk, h_Tk, hprime_Tk)[[1]]
     prob <- calc_probs(Tk, zk, h_Tk, hprime_Tk)[[2]]
+    prob[(prob <= 0) | (is.na(prob))] <- 0
     
     i <- sample(length(prob), size = 1, prob = prob)
     u <- runif(1)
@@ -221,7 +188,6 @@ ars <- function(f, n = 1000,
   
   
 ############### FUNCTION START ###########################################
-  check_input(f, n, bounds, k)
   
   n <- as.integer(n)
   x_init <- as.integer(x_init)
@@ -246,7 +212,7 @@ ars <- function(f, n = 1000,
   
   # INITIALIZING STEP
   
-  Tk <- initialize_abcissae(k, bounds, hprime)
+  Tk <- initialize_abcissae(x_init, k, hprime, bounds)
   
   num_samps <- 1
   
@@ -256,20 +222,19 @@ ars <- function(f, n = 1000,
   
   zk <- calc_z(Tk, h_Tk, hprime_Tk)
   
-  # for debugging
-  #else_count <- 0
   
   ### SAMPLING STEP
-  while(num_samps <= 1000) {
+  while(num_samps <= n) {
     
     # real xstar
-    #xstar <- sample_sk(Tk, zk, h_Tk, hprime_Tk)
+    xstar <- sample_sk(Tk, zk, h_Tk, hprime_Tk)
     
     # temporary xstar
-    xstar <- sample(bounds[1]:bounds[2], 1)
+    #xstar <- sample(seq(bounds[1], bounds[2], by = 0.01), 1)
     
-    #### check that xstar in bounds[1], bounds[2]
-    
+    assertthat::assert_that((xstar >= bounds[1]) && (xstar <= bounds[2]), msg = "xstar not in bounds")
+    zk <- sort(zk)
+    assertthat::assert_that((l(xstar, Tk, h_Tk, hprime_Tk) <= h(xstar)) && (h(xstar) <= u(xstar, zk, Tk, h_Tk, hprime_Tk)), msg = "lhu test: Not log concave")
     w <- runif(1)
     
     # squeezing test
@@ -283,24 +248,27 @@ ars <- function(f, n = 1000,
     else if (w <= exp(h(xstar) - u(xstar, zk, Tk, h_Tk, hprime_Tk))) {
       samps[num_samps] <- xstar
       num_samps <- num_samps + 1
-    }
-    
-    ### UPDATING STEP
-    else {
-      #else_count <- else_count + 1
+      
       h_xstar <- h(xstar)
       hprime_xstar <- hprime(xstar)
       Tk <- sort(c(Tk, xstar))
       
-      # not sure if this stuff is right
       h_Tk <- append(h_Tk, h_xstar, after = (which(Tk == xstar) - 1))
       hprime_Tk <- append(hprime_Tk, hprime_xstar, after = (which(Tk == xstar) - 1))
       
-      # for debugging later
-      #print(else_count)
+      zk <- calc_z(Tk, h_Tk, hprime_Tk)
+    }
+    
+    ### UPDATING STEP
+    else {
+      h_xstar <- h(xstar)
+      hprime_xstar <- hprime(xstar)
+      Tk <- sort(c(Tk, xstar))
+     
+      h_Tk <- append(h_Tk, h_xstar, after = (which(Tk == xstar) - 1))
+      hprime_Tk <- append(hprime_Tk, hprime_xstar, after = (which(Tk == xstar) - 1))
       
-      #### construct u_k+1(x), s, l and increment k: k <- k + 1
-      
+      zk <- calc_z(Tk, h_Tk, hprime_Tk)
       
       ### at some point in this loop, also check log-concavity
     }
@@ -312,14 +280,30 @@ ars <- function(f, n = 1000,
   
 }
 
-
-
-
-f <- function(x, mean = 55, sigma = 1) {
+f <- function(x, mean = 50, sigma = 1) {
   
   1/sqrt(2*pi*sigma^2)*exp(-1/2*(x-mean)^2/(sigma^2))
 }
 
-test <- ars(f = f, n = 1000, bounds = c(45, 55))
 
-hist(test)
+gam <- function(x, alp=9, bet=2) {
+  if (x > 0){
+    return(bet^alp/gamma(alp) * x^(alp - 1) * exp(-x*bet))
+  } else {return(0)}
+  
+}
+
+# testing with normal
+test <- ars(f = f, n = 1000, x_init = 47, bounds = c(45,55))
+
+hist(test, freq = F)
+curve(dnorm(x, 50, 1), 45, 55, add = TRUE, col = "red")
+
+
+# testing with gamma
+test <- ars(f = gam, n = 1000, x_init = 1, bounds = c(1,10))
+
+hist(test, freq = F)
+curve(dgamma(x, 9, 2), 1, 10, add = TRUE, col = "red")
+
+
