@@ -158,16 +158,29 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = 1, k = 20, ...) {
   
   calc_z <- function(tk, h_tk, hprime_tk) {
     n <- length(tk)
-    if (var(hprime_tk) <= 1e-8) {
-      return(rep(0, n-1))
+    if (n == 1) {
+      return(c())
     }
     
     return((h_tk[2:n] - h_tk[1:(n-1)] - tk[2:n] * hprime_tk[2:n] + tk[1:(n-1)]* hprime_tk[1:(n-1)])/(hprime_tk[1:(n-1)]-hprime_tk[2:n]))
     
   }
   
+  # u <- function(x, zk, Tk, h_Tk, hprime_Tk) {
+  #   j <- findInterval(x, zk) + 1
+  #   calc_u <- function(x){
+  #     u_result <- h_Tk[j] + (x-Tk[j])*hprime_Tk[j]
+  #     return(u_result)
+  #   }
+  #   return(calc_u(x))
+  # }
+  
   u <- function(x, zk, Tk, h_Tk, hprime_Tk) {
-    j <- findInterval(x, zk) + 1
+    if (length(zk)==0){
+      j <- 1
+    }else{
+      j <- findInterval(x, zk) + 1
+    }
     calc_u <- function(x){
       u_result <- h_Tk[j] + (x-Tk[j])*hprime_Tk[j]
       return(u_result)
@@ -175,19 +188,39 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = 1, k = 20, ...) {
     return(calc_u(x))
   }
   
+  # 
+  # l <- function(x, Tk, h_Tk, hprime_Tk) {
+  #   j <- findInterval(x, Tk)
+  #   if( (j == 0) || (j == length(Tk)) ) {
+  #     return(-Inf)
+  #   } else {
+  #     calc_l <- function(x) {
+  #       l_result <- ((Tk[j+1] - x) * h_Tk[j] + (x - Tk[j]) * h_Tk[j+1]) / (Tk[j+1] - Tk[j])
+  #       return(l_result)
+  #     }
+  #     
+  #     return(calc_l(x))
+  #     
+  #   }
+  # }
+  
   
   l <- function(x, Tk, h_Tk, hprime_Tk) {
-    j <- findInterval(x, Tk)
-    if( (j == 0) || (j == length(Tk)) ) {
-      return(-Inf)
-    } else {
-      calc_l <- function(x) {
-        l_result <- ((Tk[j+1] - x) * h_Tk[j] + (x - Tk[j]) * h_Tk[j+1]) / (Tk[j+1] - Tk[j])
-        return(l_result)
+    if(length(Tk)==1){
+      return(u(x, zk, Tk, h_Tk, hprime_Tk))
+    }else{
+      j <- findInterval(x, Tk)
+      if( (j == 0) || (j == length(Tk)) ) {
+        return(-Inf)
+      } else {
+        calc_l <- function(x) {
+          l_result <- ((Tk[j+1] - x) * h_Tk[j] + (x - Tk[j]) * h_Tk[j+1]) / (Tk[j+1] - Tk[j])
+          return(l_result)
+        }
+        
+        return(calc_l(x))
+        
       }
-      
-      return(calc_l(x))
-      
     }
   }
   
@@ -248,45 +281,49 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = 1, k = 20, ...) {
     
     z_all <- c(bounds[1], zk, bounds[2])
     num_bins <- length(z_all) - 1
+    print(paste("z-all:", z_all))
     
     z_2 <- z_all[2:length(z_all)]
     z_1 <- z_all[1:num_bins]
     
     s <- exp(h_Tk - hprime_Tk*Tk)
     s[is.infinite(s) | is.na(s)] <- 0
+    print(paste("s", s))
     
     cdf_vals <- s*(z_2 - z_1)
     cdf_vals[hprime_Tk!=0] <- (s[hprime_Tk!=0]/hprime_Tk[hprime_Tk!=0]) * (exp(z_2[hprime_Tk!=0]*(hprime_Tk[hprime_Tk!=0])) - exp(z_1[hprime_Tk!=0]*(hprime_Tk[hprime_Tk!=0]))) 
     #cdf_vals[hprime_Tk==0] <- s*(z_2 - z_1)
+    print(paste("cdf_vals:", cdf_vals))
     
     normalizing_constant <- sum(cdf_vals)
     normalized_b <- s/normalizing_constant
+    print(paste("normalized_b:", normalized_b))
     
     weighted_prob <- normalized_b*(z_2-z_1)
+    print(paste("weighted_prob:", weighted_prob))
     weighted_prob[hprime_Tk!=0] <- normalized_b[hprime_Tk!=0]/hprime_Tk[hprime_Tk!=0]*(exp(hprime_Tk[hprime_Tk!=0]*z_2[hprime_Tk!=0]) - exp(hprime_Tk[hprime_Tk!=0]*z_1[hprime_Tk!=0]))
     weighted_prob[is.infinite(weighted_prob) | weighted_prob <= 0] <- 0
     return(list(normalized_b, weighted_prob))
   }
   
   
-  
-  
-  
+
+
   sample_sk <- function(Tk, zk, h_Tk, hprime_Tk) {
-    
+
     z_all <- c(bounds[1], zk, bounds[2])
-    
+
     b <- calc_probs(Tk, zk, h_Tk, hprime_Tk)[[1]]
     prob <- calc_probs(Tk, zk, h_Tk, hprime_Tk)[[2]]
     #prob[(prob <= 0) | (is.na(prob))] <- 0
     #print(b)
-    print("Probs:")
-    print(prob)
+    #print("Probs:")
+    #print(prob)
     i <- sample(length(prob), size = 1, prob = prob)
     u <- runif(1)
     x_star <- ifelse(hprime_Tk[i] == 0, z_all[i]+prob[i]*u/b[i],
                      (1/hprime_Tk[i]) * log(u * (hprime_Tk[i]*prob[i]/b[i])+ exp(hprime_Tk[i]*z_all[i])))
-    
+
     return(x_star)
   }
   
@@ -318,6 +355,7 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = 1, k = 20, ...) {
   # INITIALIZING STEP
   
   Tk <- initialize_abcissae(x_init, k, hprime, bounds)
+  print("Tk:")
   print(Tk)
   
   num_samps <- 1
@@ -328,11 +366,32 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = 1, k = 20, ...) {
   hprime_Tk <- sapply(Tk, hprime)
   print("Found derivative")
   print(hprime_Tk)
-  hprime_Tk[is.na(hprime_Tk)]
-  hprime_Tk[is.na(hprime_Tk)] <- 0
+  #hprime_Tk[is.na(hprime_Tk)] <- 0
+  h_Tk <- h_Tk[!is.na(hprime_Tk)]
+  Tk <- Tk[!is.na(hprime_Tk)]
+  hprime_Tk <- hprime_Tk[!is.na(hprime_Tk)]
+  # 
+  # assertthat::assert_that(length(h_Tk) > 0, msg = "Function not defined in bounds")
+  print("hTk:")
   print(hprime_Tk)
-  print(var(hprime_Tk))
+  #print(var(hprime_Tk))
+  #print(sum(abs(hprime_Tk[2:length(hprime_Tk)] - hprime_Tk[1:(length(hprime_Tk) -1)]) <=  1e-8)  == (length(hprime_Tk)-1))
+  if (sum(abs(hprime_Tk[2:length(hprime_Tk)] - hprime_Tk[1:(length(hprime_Tk) -1)]) <=  1e-8)  == (length(hprime_Tk)-1)) {
+    print("if passed")
+    hprime_Tk <- hprime_Tk[2]
+    Tk <- Tk[2]
+    h_Tk <- h_Tk[2]
+  }
+  
+  
+  
+  
+  
   check_log_concave(hprime_Tk)
+  
+  
+  
+  
   
   # Tk <- Tk[is.finite(h_Tk)]
   # h_Tk <- h_Tk[is.finite(h_Tk)]
@@ -348,12 +407,12 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = 1, k = 20, ...) {
     
     # sample xstar from sk
     xstar <- sample_sk(Tk, zk, h_Tk, hprime_Tk)
-    # print(xstar)
-    # print(paste("l:", l(xstar, Tk, h_Tk, hprime_Tk) ))
-    # print(paste("h:", h(xstar)))
+    print(paste("xstar:", xstar))
+    print(paste("l:", l(xstar, Tk, h_Tk, hprime_Tk) ))
+     print(paste("h:", h(xstar)))
     # print(zk)
     # print(Tk)
-    # print(paste("u", u(xstar, zk, Tk, h_Tk, hprime_Tk)))
+    print(paste("u", u(xstar, zk, Tk, h_Tk, hprime_Tk)))
     assertthat::assert_that((xstar >= bounds[1]) && (xstar <= bounds[2]), msg = "xstar not in bounds")
     #zk <- sort(zk)
     assertthat::assert_that((l(xstar, Tk, h_Tk, hprime_Tk) <= h(xstar)) && (h(xstar) <= u(xstar, zk, Tk, h_Tk, hprime_Tk)), msg = "lhu test: Not log concave")
@@ -395,44 +454,50 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = 1, k = 20, ...) {
 
 # testing with normal
 
-hist(ars(f = dgamma, n = 1000, bounds = c(1,10), shape = 9), freq = F)
-#ars(f = dunif, n = 1000, bounds = c(0,1))
+# hist(ars(f = dgamma, n = 1000, bounds = c(1,10), shape = 9), freq = F)
+# ars(f = dunif, n = 1000, bounds = c(0,1))
 # curve(dnorm(x, 0, 1), 0, 1, add = TRUE, col = "red")
 # 
-# test <- ars(f = dnorm, n = 1000, bounds = c(55, 60),  x_init = 47, mean = 50)
+# test <- ars(f = dnorm, n = 1000, bounds = c(40, 60),  x_init = 57, mean = 50)
 # hist(test, freq = F)
-# curve(dnorm(x, 50, 1), 55, 60,  add = TRUE, col = "red")
-# 
+# curve(dnorm(x, 50, 1), 40, 60,  add = TRUE, col = "red")
+
 # 
 # # testing with gamma
-#test <- ars(f = dgamma, n = 1000,  bounds = c(0,10), x_init = 5, shape = 9, rate = 2)
-# 
+# test <- ars(f = dgamma, n = 1000,  bounds = c(1,10), x_init = 5, shape = 9, rate = 2)
+# # 
 # hist(test, freq = F)
 # curve(dgamma(x, 9, 2), 1, 10, add = TRUE, col = "red")
 # 
 # 
 # # testing with logistics
-# test <- ars(f = dlogis, n = 1000,  bounds = c(1,5), x_init = 0.5)
+# test <- ars(f = dlogis, n = 1000,  bounds = c(1,5), x_init = 2)
 # hist(test, freq = F)
-# curve(dlogis(x, 0, 1), 0, 10, add = TRUE, col = "red")
-# 
+# curve(dlogis(x, 0, 1), 1, 5, add = TRUE, col = "red")
+
 # 
 # # testing with unif
-# test <- ars(f = dnorm, n = 1000,  bounds = c(0,Inf), x_init = 1)
+test <- ars(f = dnorm, n = 1000,  bounds = c(0,Inf), x_init = 1)
 # 
 # test <- ars(f = dnorm, n = 1000, bounds = c(10, 15), min = 10, max = 15, x_init = 11)
 # hist(test, freq = F)
 
 # test <- ars(f = dnorm, n = 1000, bounds = c(0,1), x_init = 0.5)
 # hist(test, freq = F)
+# 
+# 
+# test <- ars(f = dunif, n = 1000, bounds = c(10, 15), x_init = 11, min=10, max=15)
+# hist(test, freq = F)
 
-
-test <- ars(f = dunif, n = 1000, bounds = c(10,15), x_init = 11, min = 10, max = 15)
-hist(test, freq = F)
-
-test <- ars(f = dbeta, n = 1000, bounds = c(0,1), x_init = 0.5, shape1 = 3, shape2 = 4)
-curve(dbeta(x, 3, 4), 0.01, .99, add = TRUE, col = "red")
-
+# test <- ars(f = dexp, n = 1000, bounds = c(10, 15), x_init = 11)
+# hist(test, freq = F)
+# 
+# test <- ars(f = dbeta, n = 1000, bounds = c(0.001,0.9999), x_init = 0.5, shape1 = 3, shape2 = 4)
+# hist(test, freq = F)
+# curve(dbeta(x, 3, 4), 0.01, .99, add = TRUE, col = "red")
+# 
+# 
+# test <- ars(f = dexp, n = 1000, bounds = c(10, 15), x_init = 11, rate = 1)
 
 
 
