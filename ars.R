@@ -504,7 +504,3 @@ curve(dexp(x, rate = 1/5), 0, 10,  add = TRUE, col = "red")
 test <- ars(f = dbeta, n = 1000, bounds = c(0,1), x_init = 0.5, shape1 = 3, shape2 = 4)
 hist(test, freq = F)
 curve(dbeta(x, 3, 4), 0.01, .99, add = TRUE, col = "red")
-
-
-
-####
