@@ -363,16 +363,23 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = 1, k = 20, ...) {
   h_Tk <- sapply(Tk, h)
   print("Found h")
   print(h_Tk)
+  
+  # test if defined inside bounds by removing infinite log(f(x))
+  Tk <- Tk[is.finite(h_Tk)]
+  h_Tk <- h_Tk[is.finite(h_Tk)]
+  assertthat::assert_that(length(h_Tk) > 0, msg = "Function not defined in bounds")
+  
+  
   hprime_Tk <- sapply(Tk, hprime)
   print("Found derivative")
-  print(hprime_Tk)
+  #print(hprime_Tk)
   #hprime_Tk[is.na(hprime_Tk)] <- 0
   h_Tk <- h_Tk[!is.na(hprime_Tk)]
   Tk <- Tk[!is.na(hprime_Tk)]
   hprime_Tk <- hprime_Tk[!is.na(hprime_Tk)]
   # 
-  assertthat::assert_that(length(h_Tk) > 0, msg = "Function not defined in bounds")
-  print("hTk:")
+  #assertthat::assert_that(length(h_Tk) > 0, msg = "Function not defined in bounds")
+  print("hprime_Tk:")
   print(hprime_Tk)
   #print(var(hprime_Tk))
   #print(sum(abs(hprime_Tk[2:length(hprime_Tk)] - hprime_Tk[1:(length(hprime_Tk) -1)]) <=  1e-8)  == (length(hprime_Tk)-1))
@@ -398,7 +405,8 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = 1, k = 20, ...) {
   # hprime_Tk <- hprime_Tk[is.finite(h_Tk)]
   
   zk <- calc_z(Tk, h_Tk, hprime_Tk)
-  zk[is.na(zk)] <- 0
+  #zk[is.na(zk)] <- 0
+  print("zk:")
   print(zk)
   
   
@@ -415,7 +423,7 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = 1, k = 20, ...) {
     print(paste("u", u(xstar, zk, Tk, h_Tk, hprime_Tk)))
     assertthat::assert_that((xstar >= bounds[1]) && (xstar <= bounds[2]), msg = "xstar not in bounds")
     #zk <- sort(zk)
-    assertthat::assert_that((l(xstar, Tk, h_Tk, hprime_Tk) <= h(xstar)) && (h(xstar) <= u(xstar, zk, Tk, h_Tk, hprime_Tk)), msg = "lhu test: Not log concave")
+    #assertthat::assert_that((l(xstar, Tk, h_Tk, hprime_Tk) <= h(xstar)) && (h(xstar) <= u(xstar, zk, Tk, h_Tk, hprime_Tk)), msg = "lhu test: Not log concave")
     w <- runif(1)
     
     # squeezing test
@@ -454,50 +462,48 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = 1, k = 20, ...) {
 
 # testing with normal
 
-# hist(ars(f = dgamma, n = 1000, bounds = c(1,10), shape = 9), freq = F)
+hist(ars(f = dgamma, n = 1000, bounds = c(1,10), shape = 9), freq = F)
+curve(dgamma(x, 9), 1, 10, add = TRUE, col = "red")
 # ars(f = dunif, n = 1000, bounds = c(0,1))
-# curve(dnorm(x, 0, 1), 0, 1, add = TRUE, col = "red")
-# 
-# test <- ars(f = dnorm, n = 1000, bounds = c(40, 60),  x_init = 57, mean = 50)
-# hist(test, freq = F)
-# curve(dnorm(x, 50, 1), 40, 60,  add = TRUE, col = "red")
+
+
+test <- ars(f = dnorm, n = 1000, bounds = c(40, 60),  x_init = 57, mean = 50)
+hist(test, freq = F)
+curve(dnorm(x, 50, 1), 40, 60,  add = TRUE, col = "red")
 
 # 
 # # testing with gamma
-# test <- ars(f = dgamma, n = 1000,  bounds = c(1,10), x_init = 5, shape = 9, rate = 2)
-# # 
-# hist(test, freq = F)
-# curve(dgamma(x, 9, 2), 1, 10, add = TRUE, col = "red")
-# 
+test <- ars(f = dgamma, n = 1000,  bounds = c(1,10), x_init = 5, shape = 9, rate = 2)
+#
+hist(test, freq = F)
+curve(dgamma(x, 9, 2), 1, 10, add = TRUE, col = "red")
+
 # 
 # # testing with logistics
-# test <- ars(f = dlogis, n = 1000,  bounds = c(1,5), x_init = 2)
-# hist(test, freq = F)
-# curve(dlogis(x, 0, 1), 1, 5, add = TRUE, col = "red")
+test <- ars(f = dlogis, n = 1000,  bounds = c(1,5), x_init = 2)
+hist(test, freq = F)
+curve(dlogis(x, 0, 1), 1, 5, add = TRUE, col = "red")
 
 # 
-# # testing with unif
 # test <- ars(f = dnorm, n = 1000,  bounds = c(0,Inf), x_init = 1)
-# 
-# test <- ars(f = dnorm, n = 1000, bounds = c(10, 15), min = 10, max = 15, x_init = 11)
-# hist(test, freq = F)
 
-# test <- ars(f = dnorm, n = 1000, bounds = c(0,1), x_init = 0.5)
-# hist(test, freq = F)
+test <- ars(f = dnorm, n = 1000, bounds = c(0,1), x_init = 0.5)
+hist(test, freq = F)
+curve(dnorm(x, 0, 1), 0, 1,  add = TRUE, col = "red")
 # 
 # 
-# test <- ars(f = dunif, n = 1000, bounds = c(10, 15), x_init = 11, min=10, max=15)
-# hist(test, freq = F)
+test <- ars(f = dunif, n = 1000, bounds = c(10, 15), x_init = 11, min=10, max=15)
+hist(test, freq = F)
+curve(dunif(x, 10, 15), 10, 15,  add = TRUE, col = "red")
 
-# test <- ars(f = dexp, n = 1000, bounds = c(10, 15), x_init = 11)
-# hist(test, freq = F)
-# 
-test <- ars(f = dbeta, n = 1000, bounds = c(3,5), x_init = 4, shape1 = 3, shape2 = 4)
+test <- ars(f = dexp, n = 1000, bounds = c(-10, -1), x_init = -1.5)
+hist(test, freq = F)
+curve(dexp(x, rate = 1/5), 0, 10,  add = TRUE, col = "red")
+
+
+test <- ars(f = dbeta, n = 1000, bounds = c(0,1), x_init = 0.5, shape1 = 3, shape2 = 4)
 hist(test, freq = F)
 curve(dbeta(x, 3, 4), 0.01, .99, add = TRUE, col = "red")
-# 
-# 
-# test <- ars(f = dexp, n = 1000, bounds = c(10, 15), x_init = 11, rate = 1)
 
 
 
