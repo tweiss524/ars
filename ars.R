@@ -123,7 +123,7 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = 1, k = 20, ...) {
       
     }
     if (bounds[2] == Inf) {
-      x2 <- x_init
+      xk <- x_init
       while (hprime(xk) >= 0) {
         xk <- xk + inc
         inc <- inc * 2
@@ -460,47 +460,166 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = 1, k = 20, ...) {
 }
 
 
-# testing with normal
-
-hist(ars(f = dgamma, n = 1000, bounds = c(1,10), shape = 9), freq = F)
+# # testing with normal
+# 
+hist(ars(f = dgamma, n = 1000, bounds = c(0, Inf), shape = 1, rate = 4), freq = F)
 curve(dgamma(x, 9), 1, 10, add = TRUE, col = "red")
 # ars(f = dunif, n = 1000, bounds = c(0,1))
-
-
-test <- ars(f = dnorm, n = 1000, bounds = c(40, 60),  x_init = 57, mean = 50)
-hist(test, freq = F)
-curve(dnorm(x, 50, 1), 40, 60,  add = TRUE, col = "red")
-
-# 
-# # testing with gamma
-test <- ars(f = dgamma, n = 1000,  bounds = c(1,10), x_init = 5, shape = 9, rate = 2)
-#
-hist(test, freq = F)
-curve(dgamma(x, 9, 2), 1, 10, add = TRUE, col = "red")
-
-# 
-# # testing with logistics
-test <- ars(f = dlogis, n = 1000,  bounds = c(1,5), x_init = 2)
-hist(test, freq = F)
-curve(dlogis(x, 0, 1), 1, 5, add = TRUE, col = "red")
-
-# 
-# test <- ars(f = dnorm, n = 1000,  bounds = c(0,Inf), x_init = 1)
-
-test <- ars(f = dnorm, n = 1000, bounds = c(0,1), x_init = 0.5)
-hist(test, freq = F)
-curve(dnorm(x, 0, 1), 0, 1,  add = TRUE, col = "red")
 # 
 # 
-test <- ars(f = dunif, n = 1000, bounds = c(10, 15), x_init = 11, min=10, max=15)
-hist(test, freq = F)
-curve(dunif(x, 10, 15), 10, 15,  add = TRUE, col = "red")
+# test <- ars(f = dnorm, n = 1000, bounds = c(40, 60),  x_init = 57, mean = 50)
+# hist(test, freq = F)
+# curve(dnorm(x, 50, 1), 40, 60,  add = TRUE, col = "red")
+# 
+# # 
+# # # testing with gamma
+# test <- ars(f = dgamma, n = 1000,  bounds = c(1,10), x_init = 5, shape = 9, rate = 2)
+# #
+# hist(test, freq = F)
+# curve(dgamma(x, 9, 2), 1, 10, add = TRUE, col = "red")
+# 
+# # 
+# # # testing with logistics
+# test <- ars(f = dlogis, n = 1000,  bounds = c(1,5), x_init = 2)
+# hist(test, freq = F)
+# curve(dlogis(x, 0, 1), 1, 5, add = TRUE, col = "red")
+# 
+# # 
+# test <- ars(f = dnorm, n = 1000,  bounds = c(-Inf,0), x_init = -1, mean = 1)
+# hist(test)
+# 
+# test <- ars(f = dnorm, n = 1000, bounds = c(0,1), x_init = 0.5)
+# hist(test, freq = F)
+# curve(dnorm(x, 0, 1), 0, 1,  add = TRUE, col = "red")
+# # 
+# # 
+# test <- ars(f = dunif, n = 1000, bounds = c(10, 15), x_init = 11, min=10, max=15)
+# hist(test, freq = F)
+# curve(dunif(x, 10, 15), 10, 15,  add = TRUE, col = "red")
+# 
+# test <- ars(f = dexp, n = 1000, bounds = c(-10, -1), x_init = -1.5)
+# hist(test, freq = F)
+# curve(dexp(x, rate = 1/5), 0, 10,  add = TRUE, col = "red")
+# 
+# 
+# test <- ars(f = dbeta, n = 1000, bounds = c(0,1), x_init = 0.5, shape1 = 3, shape2 = 4)
+# hist(test, freq = F)
+# curve(dbeta(x, 3, 4), 0.01, .99, add = TRUE, col = "red")
 
-test <- ars(f = dexp, n = 1000, bounds = c(-10, -1), x_init = -1.5)
-hist(test, freq = F)
-curve(dexp(x, rate = 1/5), 0, 10,  add = TRUE, col = "red")
+
+hist(ars(dlaplace, 1000, x_init = -2, bounds = c(-5,-1)))
 
 
-test <- ars(f = dbeta, n = 1000, bounds = c(0,1), x_init = 0.5, shape1 = 3, shape2 = 4)
-hist(test, freq = F)
-curve(dbeta(x, 3, 4), 0.01, .99, add = TRUE, col = "red")
+
+
+
+
+
+
+
+
+
+
+
+
+test_that("check if the input density is function", {
+  ## std. normal dist
+  #expect_equal(length(ars(dnorm, 100)), 100)
+  
+  ## exp. dist
+  #expect_equal(length(ars(dexp, 100, c(0.5), c(0,Inf))), 100)
+  
+  ## gamma dist
+  #expect_equal(length(ars(dgamma, 100, x_init=c(10), bounds=c(0.0, Inf), shape=3.0, rate=2.0)), 100)
+  
+  ## case when the input density is not a function
+  expect_error(ars(1, 100))
+})
+
+test_that("check if the bound is of length 2", {
+  ## length 2 case
+  #expect_equal(length(ars(dnorm, 100, bounds = c(-100,100))), 100)
+  
+  ## case when length not equal to 2
+  expect_error(ars(dnorm, 100, bounds = c(-1,0,1)))
+})
+
+test_that("check if the upper bound and the lower bound are equal", {
+  #expect_warning(ars(dnorm,100,bounds = c(100,100)))
+})
+
+test_that("check if x_0 is between bounds", {
+  ## when x_0 is at the left side of bounds
+  expect_error(ars(dnorm, 100, x_init = -1, bounds = c(0,1)))
+  
+  ## when x_0 is at the right side of bounds
+  expect_error(ars(dnorm, 100, x_init = 2, bounds = c(0,1)))
+  
+  ## when x_0 is in between bounds
+  expect_equal(length(ars(dnorm, 100, x_init = 0.5, bounds = c(0,1))), 100)
+  
+})
+
+
+test_that("check if the sampling distribution is close enough to the original distribution", {
+  # Note we perform Kolmogorov-Smirnov Test with the null
+  # hypothesis that the samples are drawn from the same
+  # continuous distribution
+  
+  ## std. normal
+  expect_equal(ks.test(ars(dnorm, 1000), rnorm(1000))$p.value > 0.05, T)
+  
+  ## exp(1)
+  expect_equal(ks.test(ars(dexp, 1000, x_init = 5, bounds = c(0, Inf)), rexp(1000))$p.value > 0.05, T)
+  
+  ## gamma(3,2)
+  expect_equal(ks.test(ars(dgamma, 1000, x_init = 5, bounds = c(0, Inf), shape = 3, scale = 2),
+                       rgamma(1000, shape = 3, scale = 2))$p.value > 0.05, T)
+  ## unif(0,1)
+  expect_equal(ks.test(ars(dunif, 1000, x_init = 0.5, bounds = c(0,1)), runif(1000))$p.value > 0.05, T)
+  
+  ## logistics
+  expect_equal(ks.test(ars(dlogis, 1000, x_init = 0, bounds = c(-10,10)), rlogis(1000))$p.value > 0.05, T)
+  
+  ## beta(3,2)
+  expect_equal(ks.test(ars(dbeta, 100, x_init = 0.5, bounds = c(0, 1), shape1 = 3, shape2 = 2),
+                       rbeta(100, shape1 = 3, shape2 = 2))$p.value > 0.05, T)
+  
+  ## laplace
+  library(rmutil)
+  expect_equal(ks.test(ars(dlaplace, 1000, x_init = 0, bounds = c(-5,5)),
+                       rlaplace(1000))$p.value > 0.05, T)
+
+  ## chi(2)
+  expect_equal(ks.test(ars(dchisq, 100, x_init = 1, bounds = c(0, Inf), df = 2),
+                       rchisq(100, df = 2))$p.value > 0.05, T)
+
+  ## weibull(2,1)
+  expect_equal(ks.test(ars(dweibull, 100, shape = 2, x_init = 1, bounds = c(0, Inf)),
+                       rweibull(100, shape = 2))$p.value > 0.05, T)
+})
+
+test_that("check for non-log-concavity", {
+  
+  ## simple exponential exp(x^2)
+  de = function (x) {
+    return (exp(x^2))
+  }
+  expect_error(ars(de, 1000, x_init = 0, bounds = c(-5,5)))
+  
+  ## student t(2)
+  expect_error(ars(dt, 1000, x_init = 1, bounds = c(-5,5), df = 2))
+  
+  ## cauchy
+  expect_error(ars(dcauchy, 1000, x_init = 0, bounds = c(-5,5)))
+  
+  # pareto(1,2)
+  expect_error(ars(dpareto, 1000, x_init = 3, bounds = c(1, Inf), m = 1, s = 2))
+  
+  ## lognormal
+  expect_error(ars(dlnorm, 1000, x_init = 1, bounds = c(0, Inf)))
+  # 
+  # ## F dist (1,1)
+  expect_error(ars(stats::df, 1000, x_init = 1, bounds = c(0, Inf), df1 = 1, df2 = 2))
+})
+
