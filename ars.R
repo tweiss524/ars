@@ -371,7 +371,7 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = 1, k = 20, ...) {
   Tk <- Tk[!is.na(hprime_Tk)]
   hprime_Tk <- hprime_Tk[!is.na(hprime_Tk)]
   # 
-  # assertthat::assert_that(length(h_Tk) > 0, msg = "Function not defined in bounds")
+  assertthat::assert_that(length(h_Tk) > 0, msg = "Function not defined in bounds")
   print("hTk:")
   print(hprime_Tk)
   #print(var(hprime_Tk))
@@ -477,7 +477,7 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = 1, k = 20, ...) {
 
 # 
 # # testing with unif
-test <- ars(f = dnorm, n = 1000,  bounds = c(0,Inf), x_init = 1)
+# test <- ars(f = dnorm, n = 1000,  bounds = c(0,Inf), x_init = 1)
 # 
 # test <- ars(f = dnorm, n = 1000, bounds = c(10, 15), min = 10, max = 15, x_init = 11)
 # hist(test, freq = F)
@@ -492,9 +492,9 @@ test <- ars(f = dnorm, n = 1000,  bounds = c(0,Inf), x_init = 1)
 # test <- ars(f = dexp, n = 1000, bounds = c(10, 15), x_init = 11)
 # hist(test, freq = F)
 # 
-# test <- ars(f = dbeta, n = 1000, bounds = c(0.001,0.9999), x_init = 0.5, shape1 = 3, shape2 = 4)
-# hist(test, freq = F)
-# curve(dbeta(x, 3, 4), 0.01, .99, add = TRUE, col = "red")
+test <- ars(f = dbeta, n = 1000, bounds = c(3,5), x_init = 4, shape1 = 3, shape2 = 4)
+hist(test, freq = F)
+curve(dbeta(x, 3, 4), 0.01, .99, add = TRUE, col = "red")
 # 
 # 
 # test <- ars(f = dexp, n = 1000, bounds = c(10, 15), x_init = 11, rate = 1)
