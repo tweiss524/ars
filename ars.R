@@ -4,7 +4,7 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = 1, k = 20, ...) {
   assertthat::assert_that(is.function(f), msg = "f must be a function")
   assertthat::assert_that(is.numeric(n), msg = "n must be an integer")
   assertthat::assert_that(is.numeric(x_init), msg = "x_init must be numeric")
-  assertthat::assert_that((is.numeric(k) && (k >= 2)), msg = "k must be an integer greater than or equal to 2")
+  assertthat::assert_that((is.numeric(k) && (k >= 3)), msg = "k must be an integer greater than or equal to 3")
   
   assertthat::assert_that(is.vector(bounds) && (length(bounds) == 2) && (is.numeric(bounds)), msg = "Bounds must be numeric vector of length 2")
   
@@ -113,7 +113,7 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = 1, k = 20, ...) {
     #print(paste("xinit:", x_init))
     #print(paste("Boundsss 1:", bounds[1]))
     #print(paste("Bounds2:", bounds[2]))
-    inc <- 1
+    inc <- 0.25
     if (bounds[1] == -Inf) {
       x1 <- x_init
       while (hprime(x1) <= 0){
@@ -281,26 +281,26 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = 1, k = 20, ...) {
     
     z_all <- c(bounds[1], zk, bounds[2])
     num_bins <- length(z_all) - 1
-    print(paste("z-all:", z_all))
+    #print(paste("z-all:", z_all))
     
     z_2 <- z_all[2:length(z_all)]
     z_1 <- z_all[1:num_bins]
     
     s <- exp(h_Tk - hprime_Tk*Tk)
     s[is.infinite(s) | is.na(s)] <- 0
-    print(paste("s", s))
+    #print(paste("s", s))
     
     cdf_vals <- s*(z_2 - z_1)
     cdf_vals[hprime_Tk!=0] <- (s[hprime_Tk!=0]/hprime_Tk[hprime_Tk!=0]) * (exp(z_2[hprime_Tk!=0]*(hprime_Tk[hprime_Tk!=0])) - exp(z_1[hprime_Tk!=0]*(hprime_Tk[hprime_Tk!=0]))) 
     #cdf_vals[hprime_Tk==0] <- s*(z_2 - z_1)
-    print(paste("cdf_vals:", cdf_vals))
+    #print(paste("cdf_vals:", cdf_vals))
     
     normalizing_constant <- sum(cdf_vals)
     normalized_b <- s/normalizing_constant
-    print(paste("normalized_b:", normalized_b))
+    #print(paste("normalized_b:", normalized_b))
     
     weighted_prob <- normalized_b*(z_2-z_1)
-    print(paste("weighted_prob:", weighted_prob))
+    #print(paste("weighted_prob:", weighted_prob))
     weighted_prob[hprime_Tk!=0] <- normalized_b[hprime_Tk!=0]/hprime_Tk[hprime_Tk!=0]*(exp(hprime_Tk[hprime_Tk!=0]*z_2[hprime_Tk!=0]) - exp(hprime_Tk[hprime_Tk!=0]*z_1[hprime_Tk!=0]))
     weighted_prob[is.infinite(weighted_prob) | weighted_prob <= 0] <- 0
     return(list(normalized_b, weighted_prob))
@@ -372,6 +372,7 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = 1, k = 20, ...) {
   
   hprime_Tk <- sapply(Tk, hprime)
   print("Found derivative")
+  print(hprime_Tk)
   #print(hprime_Tk)
   #hprime_Tk[is.na(hprime_Tk)] <- 0
   h_Tk <- h_Tk[!is.na(hprime_Tk)]
@@ -381,19 +382,17 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = 1, k = 20, ...) {
   #assertthat::assert_that(length(h_Tk) > 0, msg = "Function not defined in bounds")
   print("hprime_Tk:")
   print(hprime_Tk)
-  #print(var(hprime_Tk))
   #print(sum(abs(hprime_Tk[2:length(hprime_Tk)] - hprime_Tk[1:(length(hprime_Tk) -1)]) <=  1e-8)  == (length(hprime_Tk)-1))
-  if (sum(abs(hprime_Tk[2:length(hprime_Tk)] - hprime_Tk[1:(length(hprime_Tk) -1)]) <=  1e-8)  == (length(hprime_Tk)-1)) {
+  
+  # check if all h'(Tk) are the same and if they are, only keep one element
+  len_hptk <- length(hprime_Tk)
+  if (sum(abs(hprime_Tk[2:len_hptk] - hprime_Tk[1:(len_hptk-1)]) <=  1e-8)  == (len_hptk-1)) {
     print("if passed")
     hprime_Tk <- hprime_Tk[2]
     Tk <- Tk[2]
     h_Tk <- h_Tk[2]
   }
-  
-  
-  
-  
-  
+
   check_log_concave(hprime_Tk)
   
   
@@ -421,7 +420,7 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = 1, k = 20, ...) {
     # print(zk)
     # print(Tk)
     print(paste("u", u(xstar, zk, Tk, h_Tk, hprime_Tk)))
-    assertthat::assert_that((xstar >= bounds[1]) && (xstar <= bounds[2]), msg = "xstar not in bounds")
+    assertthat::assert_that((xstar >= bounds[1]) && (xstar <= bounds[2]), msg = "sampled xstar not in bounds")
     #zk <- sort(zk)
     #assertthat::assert_that((l(xstar, Tk, h_Tk, hprime_Tk) <= h(xstar)) && (h(xstar) <= u(xstar, zk, Tk, h_Tk, hprime_Tk)), msg = "lhu test: Not log concave")
     w <- runif(1)
@@ -437,11 +436,17 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = 1, k = 20, ...) {
     else {
       print("rejected")
       h_xstar <- h(xstar)
+      print("hstar:")
+      print(h_xstar)
+      if(!is.finite(h_xstar)) { break}
       hprime_xstar <- hprime(xstar)
+      
+      
       
       if (w <= exp(h_xstar - u(xstar, zk, Tk, h_Tk, hprime_Tk))) {
         samps[num_samps] <- xstar
         num_samps <- num_samps + 1
+        print("accepted")
       }
       
       Tk <- sort(c(Tk, xstar))
@@ -449,9 +454,17 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = 1, k = 20, ...) {
       h_Tk <- append(h_Tk, h_xstar, after = (which(Tk == xstar) - 1))
       hprime_Tk <- append(hprime_Tk, hprime_xstar, after = (which(Tk == xstar) - 1))
       
+      h_Tk <- h_Tk[!is.na(hprime_Tk)]
+      Tk <- Tk[!is.na(hprime_Tk)]
+      hprime_Tk <- hprime_Tk[!is.na(hprime_Tk)]
+      
+      
+      
       check_log_concave(hprime_Tk)
       
       zk <- calc_z(Tk, h_Tk, hprime_Tk)
+      print("zk")
+      print(zk)
       
       } # end else
     } # end while
@@ -462,12 +475,14 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = 1, k = 20, ...) {
 
 # # testing with normal
 # 
-hist(ars(f = dgamma, n = 1000, bounds = c(0, Inf), shape = 1, rate = 4), freq = F)
-curve(dgamma(x, 9), 1, 10, add = TRUE, col = "red")
+#hist(ars(f = dgamma, n = 1000, k = 3,  x_init = -5, bounds = c(-Inf, 0), shape = 3, rate = 4), freq = F)
+#curve(dgamma(x, 9), 1, 10, add = TRUE, col = "red")
 # ars(f = dunif, n = 1000, bounds = c(0,1))
 # 
 # 
-# test <- ars(f = dnorm, n = 1000, bounds = c(40, 60),  x_init = 57, mean = 50)
+test <- ars(f = dnorm, n = 1000, mean = 10000)
+
+#hist(ars(dcauchy, 1000, x_init = 0, bounds = c(-5,5)))
 # hist(test, freq = F)
 # curve(dnorm(x, 50, 1), 40, 60,  add = TRUE, col = "red")
 # 
@@ -502,7 +517,7 @@ curve(dgamma(x, 9), 1, 10, add = TRUE, col = "red")
 # curve(dexp(x, rate = 1/5), 0, 10,  add = TRUE, col = "red")
 # 
 # 
-# test <- ars(f = dbeta, n = 1000, bounds = c(0,1), x_init = 0.5, shape1 = 3, shape2 = 4)
+test <- ars(f = dbeta, n = 1000, bounds = c(-5, Inf), x_init = 0.5, shape1 = 3, shape2 = 4)
 # hist(test, freq = F)
 # curve(dbeta(x, 3, 4), 0.01, .99, add = TRUE, col = "red")
 
@@ -524,22 +539,22 @@ hist(ars(dlaplace, 1000, x_init = -2, bounds = c(-5,-1)))
 
 test_that("check if the input density is function", {
   ## std. normal dist
-  #expect_equal(length(ars(dnorm, 100)), 100)
-  
+  expect_equal(length(ars(dnorm, 100)), 100)
+
   ## exp. dist
-  #expect_equal(length(ars(dexp, 100, c(0.5), c(0,Inf))), 100)
-  
+  expect_equal(length(ars(dexp, 100, x_init = 0.5, c(0,Inf))), 100)
+
   ## gamma dist
-  #expect_equal(length(ars(dgamma, 100, x_init=c(10), bounds=c(0.0, Inf), shape=3.0, rate=2.0)), 100)
-  
+  expect_equal(length(ars(dgamma, 100, x_init=10, bounds=c(0.0, Inf), shape=3.0, rate=2.0)), 100)
+
   ## case when the input density is not a function
   expect_error(ars(1, 100))
 })
 
 test_that("check if the bound is of length 2", {
   ## length 2 case
-  #expect_equal(length(ars(dnorm, 100, bounds = c(-100,100))), 100)
-  
+  expect_equal(length(ars(dnorm, 100, bounds = c(-100,100))), 100)
+
   ## case when length not equal to 2
   expect_error(ars(dnorm, 100, bounds = c(-1,0,1)))
 })
@@ -551,13 +566,13 @@ test_that("check if the upper bound and the lower bound are equal", {
 test_that("check if x_0 is between bounds", {
   ## when x_0 is at the left side of bounds
   expect_error(ars(dnorm, 100, x_init = -1, bounds = c(0,1)))
-  
+
   ## when x_0 is at the right side of bounds
   expect_error(ars(dnorm, 100, x_init = 2, bounds = c(0,1)))
-  
+
   ## when x_0 is in between bounds
   expect_equal(length(ars(dnorm, 100, x_init = 0.5, bounds = c(0,1))), 100)
-  
+
 })
 
 
@@ -565,26 +580,26 @@ test_that("check if the sampling distribution is close enough to the original di
   # Note we perform Kolmogorov-Smirnov Test with the null
   # hypothesis that the samples are drawn from the same
   # continuous distribution
-  
+
   ## std. normal
   expect_equal(ks.test(ars(dnorm, 1000), rnorm(1000))$p.value > 0.05, T)
-  
+
   ## exp(1)
   expect_equal(ks.test(ars(dexp, 1000, x_init = 5, bounds = c(0, Inf)), rexp(1000))$p.value > 0.05, T)
-  
+
   ## gamma(3,2)
   expect_equal(ks.test(ars(dgamma, 1000, x_init = 5, bounds = c(0, Inf), shape = 3, scale = 2),
                        rgamma(1000, shape = 3, scale = 2))$p.value > 0.05, T)
   ## unif(0,1)
   expect_equal(ks.test(ars(dunif, 1000, x_init = 0.5, bounds = c(0,1)), runif(1000))$p.value > 0.05, T)
-  
+
   ## logistics
   expect_equal(ks.test(ars(dlogis, 1000, x_init = 0, bounds = c(-10,10)), rlogis(1000))$p.value > 0.05, T)
-  
+
   ## beta(3,2)
   expect_equal(ks.test(ars(dbeta, 100, x_init = 0.5, bounds = c(0, 1), shape1 = 3, shape2 = 2),
                        rbeta(100, shape1 = 3, shape2 = 2))$p.value > 0.05, T)
-  
+
   ## laplace
   library(rmutil)
   expect_equal(ks.test(ars(dlaplace, 1000, x_init = 0, bounds = c(-5,5)),
@@ -600,25 +615,25 @@ test_that("check if the sampling distribution is close enough to the original di
 })
 
 test_that("check for non-log-concavity", {
-  
+
   ## simple exponential exp(x^2)
   de = function (x) {
     return (exp(x^2))
   }
   expect_error(ars(de, 1000, x_init = 0, bounds = c(-5,5)))
-  
+
   ## student t(2)
   expect_error(ars(dt, 1000, x_init = 1, bounds = c(-5,5), df = 2))
-  
+
   ## cauchy
   expect_error(ars(dcauchy, 1000, x_init = 0, bounds = c(-5,5)))
-  
+
   # pareto(1,2)
   expect_error(ars(dpareto, 1000, x_init = 3, bounds = c(1, Inf), m = 1, s = 2))
-  
+
   ## lognormal
   expect_error(ars(dlnorm, 1000, x_init = 1, bounds = c(0, Inf)))
-  # 
+  #
   # ## F dist (1,1)
   expect_error(ars(stats::df, 1000, x_init = 1, bounds = c(0, Inf), df1 = 1, df2 = 2))
 })
