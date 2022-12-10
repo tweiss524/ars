@@ -1,6 +1,13 @@
 
-ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = 1, k = 20, ...) {
-  
+ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA, k = 20, ...) {
+  op <- optim(1, f, method = 'BFGS', control = list(fnscale=-1))
+  x_init
+  print("Val:")
+  print(op$value)
+  print("X_init:")
+  print(op$par)
+  print("f(xinit)")
+  print(f(op$par))
   assertthat::assert_that(is.function(f), msg = "f must be a function")
   assertthat::assert_that(is.numeric(n), msg = "n must be an integer")
   assertthat::assert_that(is.numeric(x_init), msg = "x_init must be numeric")
