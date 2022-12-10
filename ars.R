@@ -1,5 +1,5 @@
 
-ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = 1, k = 20, ...) {
+ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = 1, ...) {
   #op <- optim(1, f, method = 'BFGS', control = list(fnscale=-1))
   #x_init
   #print("Val:")
@@ -10,9 +10,8 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = 1, k = 20, ...) {
   #print(f(op$par))
   #if (is.na(x_init)) {x_init <- 1}
   assertthat::assert_that(is.function(f), msg = "f must be a function")
-  assertthat::assert_that(is.numeric(n), msg = "n must be an integer")
+  assertthat::assert_that(is.numeric(n), msg = "n must be numeric")
   assertthat::assert_that(is.numeric(x_init), msg = "x_init must be numeric")
-  assertthat::assert_that((is.numeric(k) && (k >= 3)), msg = "k must be an integer greater than or equal to 3")
   
   assertthat::assert_that(is.vector(bounds) && (length(bounds) == 2) && (is.numeric(bounds)), msg = "Bounds must be numeric vector of length 2")
   
@@ -34,7 +33,7 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = 1, k = 20, ...) {
     
   }
   
-  assertthat::assert_that((x_init >= bounds[1]) && (x_init <= bounds[2]), msg = "x_init points must be inside bounds")
+  assertthat::assert_that((x_init >= bounds[1]) && (x_init <= bounds[2]), msg = "x_init point must be inside bounds")
   
   ################################################################################
   
@@ -77,8 +76,55 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = 1, k = 20, ...) {
 # }
 
   
+  # 
+  # initialize_abcissae <- function(x_init, hprime, bounds) {
+  #   x1 <- bounds[1]
+  #   xk <- bounds[2]
+  #   #print(paste("xinit:", x_init))
+  #   #print(paste("Boundsss 1:", bounds[1]))
+  #   #print(paste("Bounds2:", bounds[2]))
+  #   inc <- 0.25
+  #   if (bounds[1] == -Inf) {
+  #     x1 <- x_init
+  #     while(!is.na(hprime(x1)) && hprime(x1) <= 0){
+  #       x1 <- x1 - inc
+  #       inc <- inc * 2
+  #     }
+  #     
+  #     if(is.na(hprime(x1))) {
+  #       stop("Please provide x_init with a finite derivative")
+  #     }
+  #     
+  #   }
+  #   if (bounds[2] == Inf) {
+  #     xk <- x_init
+  #     while (!is.na(hprime(x2)) && hprime(xk) >= 0) {
+  #       xk <- xk + inc
+  #       inc <- inc * 2
+  #     }
+  #     
+  #     if(is.na(hprime(x2))) {
+  #       stop("Please provide x_init with a finite derivative")
+  #     }
+  #     
+  #   }
+  #   
+  #   if ((bounds[1] != -Inf) && (bounds[2] != Inf)) {
+  #     print("Finite bounds")
+  #     x1 <- bounds[1]
+  #     xk <- bounds[2]
+  #     #print(paste("Bound 1:", x1))
+  #     #print(paste("Bound 2:", x2))
+  #   }
+  #   #print(paste("x1:", x1))
+  #   #print(paste("xk:", xk))
+  #   return(seq(x1, xk, length.out = 20))
+  # }
   
-  initialize_abcissae <- function(x_init, k, hprime, bounds) {
+  
+  
+  
+  initialize_abcissae <- function(x_init, hprime, bounds) {
     x1 <- bounds[1]
     xk <- bounds[2]
     #print(paste("xinit:", x_init))
@@ -87,11 +133,11 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = 1, k = 20, ...) {
     inc <- 0.25
     if (bounds[1] == -Inf) {
       x1 <- x_init
-      while (hprime(x1) <= 0){
+      while(hprime(x1) <= 0){
         x1 <- x1 - inc
         inc <- inc * 2
       }
-      
+
     }
     if (bounds[2] == Inf) {
       xk <- x_init
@@ -99,7 +145,6 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = 1, k = 20, ...) {
         xk <- xk + inc
         inc <- inc * 2
       }
-      
     }
     
     if ((bounds[1] != -Inf) && (bounds[2] != Inf)) {
@@ -111,7 +156,7 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = 1, k = 20, ...) {
     }
     #print(paste("x1:", x1))
     #print(paste("xk:", xk))
-    return(seq(x1, xk, length.out = k))
+    return(seq(x1, xk, length.out = 20))
   }
   
   
@@ -214,7 +259,6 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = 1, k = 20, ...) {
 ############### FUNCTION START ###########################################
   
   n <- as.integer(n)
-  k <- as.integer(k)
   
   
   h <- function(x) {
@@ -236,7 +280,7 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = 1, k = 20, ...) {
   
   # INITIALIZING STEP
   
-  Tk <- initialize_abcissae(x_init, k, hprime, bounds)
+  Tk <- initialize_abcissae(x_init, hprime, bounds)
   print("Tk:")
   print(Tk)
   
@@ -423,13 +467,70 @@ hist(test, freq = F)
 curve(dexp(x, rate = 1/5), 0, 10,  add = TRUE, col = "red")
 
 #
-test <- ars(f = dbeta, n = 1000, bounds = c(0, 5), x_init = 0.5, shape1 = 3, shape2 = 4)
+test <- ars(f = dbeta, n = 1000, x_init = 0.5, shape1 = 4, shape2 = 3)
 hist(test, freq = F)
-curve(dbeta(x, 3, 4), 0.01, .99, add = TRUE, col = "red")
+curve(dbeta(x, 4, 3), 0.01, .99, add = TRUE, col = "red")
 
 
-hist(ars(dlaplace, 1000, x_init = -2, bounds = c(-5,-1)), s = 3)
+hist(ars(dlaplace, 1000, x_init = -2))
 hist(ars(dlaplace, 1000, x_init = -2, bounds = c(-5,1)), s = 3)
+
+
+nor_test <- ars(dnorm, n = 1000)
+unif_test <- ars(dunif, n = 1000, bounds = c(10,15), x_init = 11, min = 10, max = 15)
+laplace_test <- ars(dlaplace, n = 1000, x_init = -2)
+beta_test <- ars(dbeta, bounds = c(0, 1), x_init = 0.5, shape1 = 4, shape2 = 3)
+exp_test <- ars(dexp, bounds = c(0, Inf), x_init = 4, rate = 5)
+
+
+abs(mean(rnorm(1000)) - mean(nor_test)) < 0.01
+abs(var(rnorm(1000)) - var(nor_test)) < 0.01
+
+
+
+
+
+
+
+
+
+
+
+test_that("provides samples close to actual distribution", {
+  
+  # implements KS test
+  
+  # N(0, 1)
+  nor_ars <- ars(dnorm, n = 1000)
+  true_nor <- rnorm(1000, 0, 1)
+  expect_equal(ks.test(nor_ars, true_nor)$p.value <= 0.05, FALSE)
+  
+  
+  # Unif(10, 15)
+  unif_ars <- ars(dunif, n = 1000, bounds = c(10,15), x_init = 11, min = 10, max = 15)
+  true_unif <- runif(1000, 10, 15)
+  expect_equal(ks.test(unif_ars, true_unif)$p.value <= 0.05, FALSE)
+  
+  # Beta(4, 3)
+  beta_ars <- ars(dbeta, n = 1000, bounds = c(0, 1), x_init = 0.5, shape1 = 4, shape2 = 3)
+  true_beta <- rbeta(1000, 4, 3)
+  expect_equal(ks.test(beta_ars, true_beta)$p.value <= 0.05, FALSE)
+  
+  # Exp(5)
+  exp_ars <- ars(dexp, n = 1000, bounds = c(0, Inf), x_init = 4, rate = 5)
+  true_exp <- rexp(1000, 5)
+  expect_equal(ks.test(exp_ars, true_exp)$p.value <= 0.05, FALSE)
+  
+  # Chi-sqared(4)
+  chi_ars <- ars(dchisq, n = 1000, bounds = c(0, Inf), x_init = 1, df = 4)
+  true_chi <- rchisq(1000, 4)
+  expect_equal(ks.test(chi_ars, true_chi)$p.value <= 0.05, FALSE)
+  
+})
+
+
+
+
 
 
 
@@ -466,7 +567,7 @@ test_that("check if the bound is of length 2", {
 })
 
 test_that("check if the upper bound and the lower bound are equal", {
-  #expect_warning(ars(dnorm,100,bounds = c(100,100)))
+  expect_warning(ars(dnorm,100,bounds = c(100,100)))
 })
 
 test_that("check if x_0 is between bounds", {
@@ -507,9 +608,9 @@ test_that("check if the sampling distribution is close enough to the original di
                        rbeta(100, shape1 = 3, shape2 = 2))$p.value > 0.05, T)
 
   # ## laplace
-  # library(rmutil)
-  # expect_equal(ks.test(ars(dlaplace, 1000, x_init = -2, bounds = c(-5,-1)),
-  #                      rlaplace(1000))$p.value > 0.05, T)
+  library(rmutil)
+  expect_equal(ks.test(ars(dlaplace, 1000, x_init = -2, bounds = c(-5,5)),
+                       rlaplace(1000))$p.value > 0.05, T)
 
   ## chi(2)
   expect_equal(ks.test(ars(dchisq, 100, x_init = 1, bounds = c(0, Inf), df = 2),
@@ -542,5 +643,41 @@ test_that("check for non-log-concavity", {
   #
   # ## F dist (1,1)
   expect_error(ars(stats::df, 1000, x_init = 1, bounds = c(0, Inf), df1 = 1, df2 = 2))
+})
+
+
+
+
+test_that("function errors out for non log-concave functions", {
+  
+  # cauchy dist
+  expect_error(ars(dcauchy, n = 1000, x_init = 1, bounds = c(-10,10)), "Function is not log-concave")
+  
+  # t-dist
+  expect_error(ars(dt, 1000, bounds = c(-5,5), x_init = 1, df = 4),"Function is not log-concave")
+  
+  # pareto dist
+  expect_error(ars(dpareto, n = 1000, bounds = c(1, Inf), x_init = 2, m = 6, s = 2), "Function is not log-concave")
+  
+  # lognormal dist
+  expect_error(ars(dlnorm, n = 1000, bounds = c(0, Inf), x_init = 1), "Function is not log-concave")
+})
+
+test_that("function detects invalid inputs", {
+  
+  # f is not a function 
+  expect_error(ars(f = "hi", n = 1000, x_init = 1, bounds = c(-10,10)), "f must be a function")
+  
+  # n is not numeric
+  expect_error(ars(dnorm, n = "1000", bounds = c(-5,5), x_init = 1), "n must be numeric")
+  
+  # bounds not numeric
+  expect_error(ars(dnorm, n = 1000, bounds = c("hi", "hello"), x_init = 2), "Bounds must be numeric vector of length 2")
+  
+  # bounds are not in order
+  expect_warning(ars(dnorm, n = 1000, bounds = c(Inf, 1), x_init = 2))
+  
+  # x_init not in bounds
+  expect_error(ars(dnorm, n = 1000, bounds = c(0, Inf), x_init = -5), "x_init point must be inside bounds")
 })
 
