@@ -268,12 +268,20 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = 1, k = 20, ...) {
   
   # check if all h'(Tk) are the same and if they are, only keep one element
   len_hptk <- length(hprime_Tk)
+  len_uq_hptk <- length(unique(hprime_Tk))
   if (sum(abs(hprime_Tk[2:len_hptk] - hprime_Tk[1:(len_hptk-1)]) <=  1e-8)  == (len_hptk-1)) {
     print("if passed")
     hprime_Tk <- hprime_Tk[2]
     Tk <- Tk[2]
     h_Tk <- h_Tk[2]
+  } else if(length(unique(hprime_Tk)) == 2 && abs(unique(hprime_Tk)[1])== abs(unique(hprime_Tk)[2])){
+    print("else if passed")
+    ind <- c(which(hprime_Tk==unique(hprime_Tk)[1])[1],which(hprime_Tk==unique(hprime_Tk)[2])[1])
+    hprime_Tk <- hprime_Tk[ind]
+    Tk <- Tk[ind]
+    h_Tk <- h_Tk[ind]
   }
+  
   # else if (length(unique(hprime_Tk)) == 2 && c(1,-1) %in% hprime_Tk) {
   #   hprime_Tk <- unique(hprime_Tk)
   #   Tk <- Tk[which(hprime_Tk == unique(hprime_Tk))]
