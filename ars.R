@@ -268,13 +268,15 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = 1, k = 20, ...) {
   
   # check if all h'(Tk) are the same and if they are, only keep one element
   len_hptk <- length(hprime_Tk)
-  len_uq_hptk <- length(unique(hprime_Tk))
+
+  
   if (sum(abs(hprime_Tk[2:len_hptk] - hprime_Tk[1:(len_hptk-1)]) <=  1e-8)  == (len_hptk-1)) {
     print("if passed")
     hprime_Tk <- hprime_Tk[2]
     Tk <- Tk[2]
     h_Tk <- h_Tk[2]
-  } else if(length(unique(hprime_Tk)) == 2 && abs(unique(hprime_Tk)[1])== abs(unique(hprime_Tk)[2])){
+  } else if(sum(abs(hprime_Tk[2:len_hptk] - hprime_Tk[1:(len_hptk-1)]) <=  1e-8)  == (len_hptk-2)){
+    hprime_Tk <- as.integer(round(hprime_Tk))
     print("else if passed")
     ind <- c(which(hprime_Tk==unique(hprime_Tk)[1])[1],which(hprime_Tk==unique(hprime_Tk)[2])[1])
     hprime_Tk <- hprime_Tk[ind]
@@ -353,7 +355,16 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = 1, k = 20, ...) {
       Tk <- Tk[!is.na(hprime_Tk)]
       hprime_Tk <- hprime_Tk[!is.na(hprime_Tk)]
       
-      
+      ## Check h'x and update the value again.
+      len_hptk_new <- length(hprime_Tk)
+      if(sum(abs(hprime_Tk[2:len_hptk_new] - hprime_Tk[1:(len_hptk_new-1)]) <=  1e-8)  == (len_hptk_new-2)){
+        hprime_Tk <- as.integer(round(hprime_Tk))
+        print("else if passed")
+        ind <- c(which(hprime_Tk==unique(hprime_Tk)[1])[1],which(hprime_Tk==unique(hprime_Tk)[2])[1])
+        hprime_Tk <- hprime_Tk[ind]
+        Tk <- Tk[ind]
+        h_Tk <- h_Tk[ind]
+      }
       
       check_log_concave(hprime_Tk)
       
@@ -409,7 +420,7 @@ curve(dunif(x, 10, 15), 10, 15,  add = TRUE, col = "red")
 
 test <- ars(f = dexp, n = 1000, bounds = c(1, Inf), x_init = 1.5)
 hist(test, freq = F)
-curve(dexp(x, rate = 1/5), 0, 10,  add = TRUE, col = "red")s
+curve(dexp(x, rate = 1/5), 0, 10,  add = TRUE, col = "red")
 
 #
 test <- ars(f = dbeta, n = 1000, bounds = c(0, 5), x_init = 0.5, shape1 = 3, shape2 = 4)
@@ -418,7 +429,7 @@ curve(dbeta(x, 3, 4), 0.01, .99, add = TRUE, col = "red")
 
 
 hist(ars(dlaplace, 1000, x_init = -2, bounds = c(-5,-1)), s = 3)
-
+hist(ars(dlaplace, 1000, x_init = -2, bounds = c(-5,1)), s = 3)
 
 
 
