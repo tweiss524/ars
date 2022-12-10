@@ -8,6 +8,7 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA, k = 20, ...) {
   print(op$par)
   print("f(xinit)")
   print(f(op$par))
+  if (is.na(x_init)) {x_init <- 1}
   assertthat::assert_that(is.function(f), msg = "f must be a function")
   assertthat::assert_that(is.numeric(n), msg = "n must be an integer")
   assertthat::assert_that(is.numeric(x_init), msg = "x_init must be numeric")
@@ -399,6 +400,11 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA, k = 20, ...) {
     Tk <- Tk[2]
     h_Tk <- h_Tk[2]
   }
+  # else if (length(unique(hprime_Tk)) == 2 && c(1,-1) %in% hprime_Tk) {
+  #   hprime_Tk <- unique(hprime_Tk)
+  #   Tk <- Tk[which(hprime_Tk == unique(hprime_Tk))]
+  #   h_Tk <- h_Tk[which(hprime_Tk == unique(hprime_Tk))]
+  # }
 
   check_log_concave(hprime_Tk)
   
@@ -421,12 +427,12 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA, k = 20, ...) {
     
     # sample xstar from sk
     xstar <- sample_sk(Tk, zk, h_Tk, hprime_Tk)
-    print(paste("xstar:", xstar))
-    print(paste("l:", l(xstar, Tk, h_Tk, hprime_Tk) ))
-     print(paste("h:", h(xstar)))
+    #print(paste("xstar:", xstar))
+    #print(paste("l:", l(xstar, Tk, h_Tk, hprime_Tk) ))
+    #print(paste("h:", h(xstar)))
     # print(zk)
     # print(Tk)
-    print(paste("u", u(xstar, zk, Tk, h_Tk, hprime_Tk)))
+    #print(paste("u", u(xstar, zk, Tk, h_Tk, hprime_Tk)))
     assertthat::assert_that((xstar >= bounds[1]) && (xstar <= bounds[2]), msg = "sampled xstar not in bounds")
     #zk <- sort(zk)
     #assertthat::assert_that((l(xstar, Tk, h_Tk, hprime_Tk) <= h(xstar)) && (h(xstar) <= u(xstar, zk, Tk, h_Tk, hprime_Tk)), msg = "lhu test: Not log concave")
@@ -529,7 +535,7 @@ test <- ars(f = dbeta, n = 1000, bounds = c(-5, Inf), x_init = 0.5, shape1 = 3, 
 # curve(dbeta(x, 3, 4), 0.01, .99, add = TRUE, col = "red")
 
 
-hist(ars(dlaplace, 1000, x_init = -2, bounds = c(-5,-1)))
+hist(ars(dlaplace, 1000, x_init = -2, bounds = c(-5,10)), s = 3)
 
 
 
