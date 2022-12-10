@@ -1,14 +1,14 @@
 
-ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA, k = 20, ...) {
-  op <- optim(1, f, method = 'BFGS', control = list(fnscale=-1))
-  x_init
-  print("Val:")
-  print(op$value)
-  print("X_init:")
-  print(op$par)
-  print("f(xinit)")
-  print(f(op$par))
-  if (is.na(x_init)) {x_init <- 1}
+ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = 1, k = 20, ...) {
+  #op <- optim(1, f, method = 'BFGS', control = list(fnscale=-1))
+  #x_init
+  #print("Val:")
+  #print(op$value)
+  #print("X_init:")
+  #print(op$par)
+  #print("f(xinit)")
+  #print(f(op$par))
+  #if (is.na(x_init)) {x_init <- 1}
   assertthat::assert_that(is.function(f), msg = "f must be a function")
   assertthat::assert_that(is.numeric(n), msg = "n must be an integer")
   assertthat::assert_that(is.numeric(x_init), msg = "x_init must be numeric")
@@ -34,8 +34,7 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA, k = 20, ...) {
     
   }
   
-  assertthat::assert_that((x_init >= bounds[1]) && (x_init <= bounds[2]), msg = "x_init must be inside bounds")
-  
+  assertthat::assert_that((x_init >= bounds[1]) && (x_init <= bounds[2]), msg = "x_init points must be inside bounds")
   
   ################################################################################
   
@@ -47,72 +46,36 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA, k = 20, ...) {
   
   ########################################################################
   
-  # initialize_abcissae <- function(x_init, k, hprime, bounds) {
-  #   
-  #   if((bounds[1] == -Inf) && (bounds[2] == Inf)) {
-  #     x <- x_init - 10
-  #     y <- x_init + 10
-  #     
-  #     while((!is.finite(hprime(x))) && (!is.finite(hprime(y)))) {
-  #       x <- x + 1
-  #       y <- y - 1
-  #       
-  #       if (x >= y) {
-  #         stop("Invalid Bounds case (-Inf, Inf).")
-  #       }
-  #       
-  #     }
-  #     
-  #     bounds[1] <- x
-  #     bounds[2] <- y
-  #     bounds[1] <<- x
-  #     bounds[2] <<- y
-  #     
-  #   }
-  #   
-  #   if((bounds[1] == -Inf) && (bounds[2] != Inf)) {
-  #     
-  #     x <- bounds[2] - 10
-  #     
-  #     while((hprime(x) <= 0) && (hprime(x) != Inf) && (x < bounds[2])) {
-  #       x <- x + 1
-  #     }
-  #     
-  #     if((hprime(x) == Inf) | (x >= bounds[2])) {
-  #       stop("Invalid Bounds case (-Inf, x).")
-  #     }
-  #     
-  #     bounds[1] <- x
-  #     bounds[1] <<- x
-  #     
-  #   }
-  #   
-  #   if((bounds[1] != -Inf) && (bounds[2] == Inf)) {
-  #     
-  #     y <- bounds[1] + 10
-  #     
-  #     while((hprime(y) >= 0) && (hprime(y) != -Inf) && (y > bounds[1])) {
-  #       y <- y - 1
-  #     }
-  #     
-  #     if((hprime(y) == -Inf) | (y <= bounds[1])) {
-  #       stop("Invalid Bounds case (x, Inf).")
-  #     }
-  # 
-  #     bounds[2] <- y
-  #     bounds[2] <<- y
-  #     
-  #   }
-  #   
-  #   if((bounds[1] != -Inf) && (bounds[2] != Inf)) {
-  #     
-  #     if((!is.finite(hprime(bounds[1]))) || (!is.finite(hprime(bounds[2])))) {
-  #       stop("Function f not defined on bounds case (x,y).")
-  #     }
-  #   }
-  #   
-  #   return(seq(bounds[1], bounds[2], length.out = k))
-  # }
+#   
+#   initialize_abcissae <- function(x_init, k, hprime, bounds) {
+#     Tk <- c(x_init)
+#     
+#     x1 <- bounds[1]
+#     xk <- bounds[2]
+#     inc <- 0.25
+#     hpTk <- sapply(Tk, hprime)
+#     if (bounds[1] == -Inf) {
+#       assertthat::assert_that(!all(hpTk < 0), msg = "h'(x_init) must be > 0")
+#       x1 <- which(hpTk > 0)[1]
+#       }
+# 
+#     if (bounds[2] == Inf) {
+#       assertthat::assert_that(!all(hpTk > 0), msg = "h'(x_init) must be < 0")
+#       xk <- sort(which(hpTk < 0), decreasing = T)[1]
+#       }
+#     
+#     if ((bounds[1] != -Inf) && (bounds[2] != Inf)) {
+#       print("Finite bounds")
+#       x1 <- bounds[1]
+#       xk <- bounds[2]
+#       #print(paste("Bound 1:", x1))
+#       #print(paste("Bound 2:", x2))
+#     }
+#     #print(paste("x1:", x1))
+#     #print(paste("xk:", xk))
+#     return(seq(x1, xk, length.out = 2))
+# }
+
   
   
   initialize_abcissae <- function(x_init, k, hprime, bounds) {
@@ -152,18 +115,6 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA, k = 20, ...) {
   }
   
   
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   calc_z <- function(tk, h_tk, hprime_tk) {
     n <- length(tk)
     if (n == 1) {
@@ -174,14 +125,6 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA, k = 20, ...) {
     
   }
   
-  # u <- function(x, zk, Tk, h_Tk, hprime_Tk) {
-  #   j <- findInterval(x, zk) + 1
-  #   calc_u <- function(x){
-  #     u_result <- h_Tk[j] + (x-Tk[j])*hprime_Tk[j]
-  #     return(u_result)
-  #   }
-  #   return(calc_u(x))
-  # }
   
   u <- function(x, zk, Tk, h_Tk, hprime_Tk) {
     if (length(zk)==0){
@@ -195,22 +138,6 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA, k = 20, ...) {
     }
     return(calc_u(x))
   }
-  
-  # 
-  # l <- function(x, Tk, h_Tk, hprime_Tk) {
-  #   j <- findInterval(x, Tk)
-  #   if( (j == 0) || (j == length(Tk)) ) {
-  #     return(-Inf)
-  #   } else {
-  #     calc_l <- function(x) {
-  #       l_result <- ((Tk[j+1] - x) * h_Tk[j] + (x - Tk[j]) * h_Tk[j+1]) / (Tk[j+1] - Tk[j])
-  #       return(l_result)
-  #     }
-  #     
-  #     return(calc_l(x))
-  #     
-  #   }
-  # }
   
   
   l <- function(x, Tk, h_Tk, hprime_Tk) {
@@ -232,88 +159,35 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA, k = 20, ...) {
     }
   }
   
-  # calc_probs <- function(Tk, zk, h_Tk, hprime_Tk) {
-  #   print(zk)
-  #   
-  #   z_all <- c(bounds[1], zk, bounds[2])
-  #   num_bins <- length(z_all) - 1
-  #   
-  #   z_2 <- z_all[2:length(z_all)]
-  #   z_1 <- z_all[1:num_bins]
-  #   
-  #   s <- exp(h_Tk - hprime_Tk*Tk)
-  #   s[is.infinite(s) | is.na(s)] <- 0
-  #   
-  #   cdf_vals <- c()
-  #   cdf_vals[s!=0] <- (s/hprime_Tk) * (exp(z_2*(hprime_Tk)) - exp(z_1*(hprime_Tk))) 
-  #   cdf_vals[s==0] <- s[s==0]*(z_2[s==0] - z_1)
-  #   
-  #   normalizing_constant <- sum(cdf_vals)
-  #   normalized_b <- s/normalizing_constant
-  #   
-  #   weighted_prob <- c()
-  #   weighted_prob[s!=0] <- normalized_b/hprime_Tk*(exp(hprime_Tk*z_2) - exp(hprime_Tk*z_1))
-  #   weighted_prob[s==0] <- normalized_b*(z_2-z_1)
-  #   return(list(normalized_b, weighted_prob))
-  # }
-  
-  
-  # calc_probs <- function(Tk, zk, h_Tk, hprime_Tk) {
-  #   
-  #   
-  #   z_all <- c(bounds[1], zk, bounds[2])
-  #   num_bins <- length(z_all) - 1
-  #   cdf_vals <- rep(0, num_bins)
-  #   
-  #   z_plus_one <- z_all[2:length(z_all)]
-  #   z_start <- z_all[1:num_bins]
-  #   
-  #   s <- exp(h_Tk - hprime_Tk*Tk)
-  #   s[which(is.infinite(s))] <- 0
-  #   s[which(is.na(s))] <- 0
-  #   
-  #   cdf_vals <- ifelse(s==0, (s/hprime_Tk) * (exp(z_plus_one*(hprime_Tk)) - exp(z_start*(hprime_Tk))), 
-  #                      z_plus_one-z_start)
-  #   
-  #   normalizing_constant <- sum(cdf_vals)
-  #   normalized_b <- s/normalizing_constant
-  #   
-  #   weighted_prob <- c()
-  #   weighted_prob[s!=0] <- normalized_b/hprime_Tk*(exp(hprime_Tk*z_plus_one) - exp(hprime_Tk*z_start))
-  #   weighted_prob[s==0] <- normalized_b*(z_plus_one-z_start)
-  #   return(list(normalized_b, weighted_prob))
-  # }
-  
   calc_probs <- function(Tk, zk, h_Tk, hprime_Tk) {
-    
-    
+
+
     z_all <- c(bounds[1], zk, bounds[2])
     num_bins <- length(z_all) - 1
-    #print(paste("z-all:", z_all))
-    
+    print(paste("z-all:", z_all))
+
     z_2 <- z_all[2:length(z_all)]
     z_1 <- z_all[1:num_bins]
-    
+
     s <- exp(h_Tk - hprime_Tk*Tk)
     s[is.infinite(s) | is.na(s)] <- 0
-    #print(paste("s", s))
-    
+    print(paste("s", s))
+
     cdf_vals <- s*(z_2 - z_1)
-    cdf_vals[hprime_Tk!=0] <- (s[hprime_Tk!=0]/hprime_Tk[hprime_Tk!=0]) * (exp(z_2[hprime_Tk!=0]*(hprime_Tk[hprime_Tk!=0])) - exp(z_1[hprime_Tk!=0]*(hprime_Tk[hprime_Tk!=0]))) 
+    cdf_vals[hprime_Tk!=0] <- (s[hprime_Tk!=0]/hprime_Tk[hprime_Tk!=0]) * (exp(z_2[hprime_Tk!=0]*(hprime_Tk[hprime_Tk!=0])) - exp(z_1[hprime_Tk!=0]*(hprime_Tk[hprime_Tk!=0])))
     #cdf_vals[hprime_Tk==0] <- s*(z_2 - z_1)
-    #print(paste("cdf_vals:", cdf_vals))
-    
+    print(paste("cdf_vals:", cdf_vals))
+
     normalizing_constant <- sum(cdf_vals)
     normalized_b <- s/normalizing_constant
-    #print(paste("normalized_b:", normalized_b))
-    
+    print(paste("normalized_b:", normalized_b))
+
     weighted_prob <- normalized_b*(z_2-z_1)
-    #print(paste("weighted_prob:", weighted_prob))
+    print(paste("weighted_prob:", weighted_prob))
     weighted_prob[hprime_Tk!=0] <- normalized_b[hprime_Tk!=0]/hprime_Tk[hprime_Tk!=0]*(exp(hprime_Tk[hprime_Tk!=0]*z_2[hprime_Tk!=0]) - exp(hprime_Tk[hprime_Tk!=0]*z_1[hprime_Tk!=0]))
     weighted_prob[is.infinite(weighted_prob) | weighted_prob <= 0] <- 0
     return(list(normalized_b, weighted_prob))
   }
-  
   
 
 
@@ -488,12 +362,12 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA, k = 20, ...) {
 
 # # testing with normal
 # 
-#hist(ars(f = dgamma, n = 1000, k = 3,  x_init = -5, bounds = c(-Inf, 0), shape = 3, rate = 4), freq = F)
-#curve(dgamma(x, 9), 1, 10, add = TRUE, col = "red")
+# hist(ars(f = dgamma, n = 1000, k = 3,  x_init = -1, bounds = c(-Inf, 0), shape = 3, rate = 4), freq = F)
+# curve(dgamma(x, 3, 4), 0, add = TRUE, col = "red")
 # ars(f = dunif, n = 1000, bounds = c(0,1))
 # 
 # 
-test <- ars(f = dnorm, n = 1000, mean = 10000)
+#test <- ars(f = dnorm, n = 1000, mean = 10000, x_init = 10000)
 
 #hist(ars(dcauchy, 1000, x_init = 0, bounds = c(-5,5)))
 # hist(test, freq = F)
@@ -508,34 +382,34 @@ test <- ars(f = dnorm, n = 1000, mean = 10000)
 # 
 # # 
 # # # testing with logistics
-# test <- ars(f = dlogis, n = 1000,  bounds = c(1,5), x_init = 2)
-# hist(test, freq = F)
-# curve(dlogis(x, 0, 1), 1, 5, add = TRUE, col = "red")
+#test <- ars(f = dlogis, n = 1000,  bounds = c(1,5), x_init = 2)
+#hist(test, freq = F)
+#curve(dlogis(x, 0, 1), 1, 5, add = TRUE, col = "red")
 # 
 # # 
 # test <- ars(f = dnorm, n = 1000,  bounds = c(-Inf,0), x_init = -1, mean = 1)
 # hist(test)
-# 
+
 # test <- ars(f = dnorm, n = 1000, bounds = c(0,1), x_init = 0.5)
 # hist(test, freq = F)
 # curve(dnorm(x, 0, 1), 0, 1,  add = TRUE, col = "red")
 # # 
 # # 
-# test <- ars(f = dunif, n = 1000, bounds = c(10, 15), x_init = 11, min=10, max=15)
-# hist(test, freq = F)
-# curve(dunif(x, 10, 15), 10, 15,  add = TRUE, col = "red")
-# 
-# test <- ars(f = dexp, n = 1000, bounds = c(-10, -1), x_init = -1.5)
-# hist(test, freq = F)
-# curve(dexp(x, rate = 1/5), 0, 10,  add = TRUE, col = "red")
-# 
-# 
-test <- ars(f = dbeta, n = 1000, bounds = c(-5, Inf), x_init = 0.5, shape1 = 3, shape2 = 4)
-# hist(test, freq = F)
-# curve(dbeta(x, 3, 4), 0.01, .99, add = TRUE, col = "red")
+test <- ars(f = dunif, n = 1000, bounds = c(10, 15), x_init = 11, min=10, max=15)
+hist(test, freq = F)
+curve(dunif(x, 10, 15), 10, 15,  add = TRUE, col = "red")
+
+test <- ars(f = dexp, n = 1000, bounds = c(1, Inf), x_init = 1.5)
+hist(test, freq = F)
+curve(dexp(x, rate = 1/5), 0, 10,  add = TRUE, col = "red")s
+
+#
+test <- ars(f = dbeta, n = 1000, bounds = c(0, 5), x_init = 0.5, shape1 = 3, shape2 = 4)
+hist(test, freq = F)
+curve(dbeta(x, 3, 4), 0.01, .99, add = TRUE, col = "red")
 
 
-hist(ars(dlaplace, 1000, x_init = -2, bounds = c(-5,10)), s = 3)
+hist(ars(dlaplace, 1000, x_init = -2, bounds = c(-5,-1)), s = 3)
 
 
 
@@ -613,10 +487,10 @@ test_that("check if the sampling distribution is close enough to the original di
   expect_equal(ks.test(ars(dbeta, 100, x_init = 0.5, bounds = c(0, 1), shape1 = 3, shape2 = 2),
                        rbeta(100, shape1 = 3, shape2 = 2))$p.value > 0.05, T)
 
-  ## laplace
-  library(rmutil)
-  expect_equal(ks.test(ars(dlaplace, 1000, x_init = 0, bounds = c(-5,5)),
-                       rlaplace(1000))$p.value > 0.05, T)
+  # ## laplace
+  # library(rmutil)
+  # expect_equal(ks.test(ars(dlaplace, 1000, x_init = -2, bounds = c(-5,-1)),
+  #                      rlaplace(1000))$p.value > 0.05, T)
 
   ## chi(2)
   expect_equal(ks.test(ars(dchisq, 100, x_init = 1, bounds = c(0, Inf), df = 2),
