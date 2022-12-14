@@ -1,6 +1,30 @@
 
 ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA) {
   
+  #' Adaptive Rejection Sampling.
+  #' 
+  #' @description The function conducts rejection sampling for the probability density function f, and returns n samples from the function.
+  #'  
+  #'
+  #' 
+  #' @param f function. The probability density function where to sample.
+  #' @param n integer. The numbers of desired samples. The default is 1000.
+  #' @param bounds vector with length 2. The lower and upper bound of the sampling distribution f with the format of (lower_bound,upper_bound). The default is (-Inf, Inf).
+  #' @param x_init integer. The starting point within the bound that utilized in the abscissae. The default is 1.
+  #' 
+  #' @return The samples of the adaptive rejection sampling from the function f with length n.
+  #' 
+  #' 
+  #' @examples ars(dnorm, n = 1000, bounds = c(-10,10), x_init = 1).
+  #' 
+  #' 
+  #' @references Gilks, W. R., & Wild, P. (1992). Adaptive rejection sampling for Gibbs sampling. 
+  #' Journal of the Royal Statistical Society: Series C (Applied Statistics), 41(2), 337-348.
+
+
+
+  ## If the user does not provide the initial point, take the mode of the function f as the x_init.
+  
   if (is.na(x_init)) {
     x_init <- optim(1, f, method = 'L-BFGS-B', control = list(fnscale=-1))$par
     
@@ -17,6 +41,11 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA) {
   
   assertthat::assert_that(is.vector(bounds) && (length(bounds) == 2) && (is.numeric(bounds)), msg = "Bounds must be numeric vector of length 2")
   
+  
+  ## Check the sanity of the bounds.
+  
+  ## Automatically reverse the bounds if the user provide a lower bound that is greater than the upper bound.
+  
   if (bounds[1] > bounds[2]) {
     
     bounds <- c(bounds[2], bounds[1])
@@ -25,6 +54,9 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA) {
                    sprintf("New bounds are (%s, %s)", bounds[1], bounds[2])))
     
   }
+  
+  
+  ## Automatically set the bounds to the default (-Inf,Inf) if the user provides same value for the bounds.
   
   if (bounds[1] == bounds[2]) {
     
@@ -39,6 +71,8 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA) {
   
   ################################################################################
   
+  ## Check the log-concave of the function.
+  
   check_log_concave <- function(x){
     # ensure that h'(x) is decreasing monotonically
     n <- length(x)
@@ -47,11 +81,15 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA) {
   
   ########################################################################
   
+  
+  ## Take in x_init and bounds to generate the abcissae sets, Tk.
 
   initialize_abcissae <- function(x_init, hprime, bounds) {
+    
     x1 <- bounds[1]
     xk <- bounds[2]
     
+    ## 
     inc <- 0.25
     if (bounds[1] == -Inf) {
       x1 <- x_init - 0.1
@@ -91,7 +129,6 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA) {
   }
   
   
-  # 
   # initialize_abcissae <- function(x_init, hprime, bounds) {
   #   x1 <- bounds[1]
   #   xk <- bounds[2]
@@ -128,6 +165,8 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA) {
   # }
   
   
+  # Take in tk, h_tk, hprime_tk to calculate zk, the intersection points of the tangents for each elements in Tk. 
+  
   calc_z <- function(tk, h_tk, hprime_tk) {
     n <- length(tk)
     if (n == 1) {
@@ -138,6 +177,8 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA) {
     
   }
   
+  
+  # Calculate the rejection envelope on Tk.
   
   u <- function(x, zk, Tk, h_Tk, hprime_Tk) {
     if (length(zk)==0){
@@ -152,6 +193,8 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA) {
     return(calc_u(x))
   }
   
+  
+  # Calculate the squeezing function on Tk.
   
   l <- function(x, Tk, h_Tk, hprime_Tk) {
     if(length(Tk)==1){
@@ -172,8 +215,9 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA) {
     }
   }
   
+  
+  
   calc_probs <- function(Tk, zk, h_Tk, hprime_Tk) {
-
 
     z_all <- c(bounds[1], zk, bounds[2])
     num_bins <- length(z_all) - 1
@@ -226,9 +270,11 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA) {
   
 ############### FUNCTION START ###########################################
   
+  
   n <- as.integer(n)
   
   
+  # Take the log of function f.
   h <- function(x) {
     
     logf <- log(f(x))
@@ -236,17 +282,19 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA) {
     return(logf)
   }
   
-  
+  # Take the derivative of function h (The log of f).
   hprime <- function(x) {
     der <- numDeriv::grad(h, x)
     #der <- (h(x + 1e-8) - h(x))/1e-8
     return(der)
   }
   
-  # initializing sample vector
+  # Initializing sample vector
   samps <- rep(NA, n)
   
-  # INITIALIZING STEP
+  
+  
+  ########## INITIALIZING STEP ##########
   
   Tk <- initialize_abcissae(x_init, hprime, bounds)
   print("Tk:")
@@ -258,7 +306,7 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA) {
   print("Found h")
   print(h_Tk)
   
-  # test if defined inside bounds by removing infinite log(f(x))
+  # Check whether the function is defined inside bounds by removing infinite log(f(x))
   Tk <- Tk[is.finite(h_Tk)]
   h_Tk <- h_Tk[is.finite(h_Tk)]
   assertthat::assert_that(length(h_Tk) > 0, msg = "Function not defined in bounds")
@@ -272,22 +320,30 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA) {
   h_Tk <- h_Tk[!is.na(hprime_Tk)]
   Tk <- Tk[!is.na(hprime_Tk)]
   hprime_Tk <- hprime_Tk[!is.na(hprime_Tk)]
-  # 
+
   #assertthat::assert_that(length(h_Tk) > 0, msg = "Function not defined in bounds")
   print("hprime_Tk:")
   print(hprime_Tk)
   #print(sum(abs(hprime_Tk[2:length(hprime_Tk)] - hprime_Tk[1:(length(hprime_Tk) -1)]) <=  1e-8)  == (length(hprime_Tk)-1))
   
-  # check if all h'(Tk) are the same and if they are, only keep one element
-  len_hptk <- length(hprime_Tk)
 
+  ## Handle the case when hprime_Tk are all equal to a constant.
+  
+  len_hptk <- length(hprime_Tk)
   
   if (sum(abs(hprime_Tk[2:len_hptk] - hprime_Tk[1:(len_hptk-1)]) <=  1e-8)  == (len_hptk-1)) {
+    
+    # Keep the first non-NA element if the hprime_tk all equal to a constant.
+    
     print("if passed")
     hprime_Tk <- hprime_Tk[2]
     Tk <- Tk[2]
     h_Tk <- h_Tk[2]
+    
   } else if(sum(abs(hprime_Tk[2:len_hptk] - hprime_Tk[1:(len_hptk-1)]) <=  1e-8)  == (len_hptk-2)){
+    
+    # Keep the first element for each repetitive hprime_Tk if the hprime_tk only takes values of two constant.
+    
     hprime_Tk <- as.integer(round(hprime_Tk))
     print("else if passed")
     ind <- c(which(hprime_Tk==unique(hprime_Tk)[1])[1],which(hprime_Tk==unique(hprime_Tk)[2])[1])
@@ -318,10 +374,11 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA) {
   print(zk)
   
   
-  ### SAMPLING STEP
+  ########## SAMPLING STEP ##########
+  
   while(num_samps <= n) {
     
-    # sample xstar from sk
+    # Sample xstar from sk.
     xstar <- sample_sk(Tk, zk, h_Tk, hprime_Tk)
     #print(paste("xstar:", xstar))
     #print(paste("l:", l(xstar, Tk, h_Tk, hprime_Tk) ))
@@ -334,28 +391,29 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA) {
     #assertthat::assert_that((l(xstar, Tk, h_Tk, hprime_Tk) <= h(xstar)) && (h(xstar) <= u(xstar, zk, Tk, h_Tk, hprime_Tk)), msg = "lhu test: Not log concave")
     w <- runif(1)
     
-    # squeezing test
+    ## squeezing test
     if(w <= exp(l(xstar, Tk, h_Tk, hprime_Tk) - u(xstar, zk, Tk, h_Tk, hprime_Tk))) {
       
       samps[num_samps] <- xstar
       num_samps <- num_samps + 1
     }
     
-    # rejection test
+    ## rejection test
     else {
       h_xstar <- h(xstar)
       if(!is.finite(h_xstar)) { break}
       hprime_xstar <- hprime(xstar)
       
       
+  ########## UPDATING STEP ##########  
       
       if (w <= exp(h_xstar - u(xstar, zk, Tk, h_Tk, hprime_Tk))) {
         samps[num_samps] <- xstar
         num_samps <- num_samps + 1
       }
       
+      ## Append the x_star that fails the squeezing test into Tk, and calculate the corresponding h_Tk, hprime_Tk.
       Tk <- sort(c(Tk, xstar))
-      
       h_Tk <- append(h_Tk, h_xstar, after = (which(Tk == xstar) - 1))
       hprime_Tk <- append(hprime_Tk, hprime_xstar, after = (which(Tk == xstar) - 1))
       
@@ -363,7 +421,8 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA) {
       Tk <- Tk[!is.na(hprime_Tk)]
       hprime_Tk <- hprime_Tk[!is.na(hprime_Tk)]
       
-      ## Check h'x and update the value again.
+      ## Check the behavior of hprime_tk.
+      
       len_hptk_new <- length(hprime_Tk)
       if(sum(abs(hprime_Tk[2:len_hptk_new] - hprime_Tk[1:(len_hptk_new-1)]) <=  1e-8)  == (len_hptk_new-2)){
         hprime_Tk <- as.integer(round(hprime_Tk))
@@ -374,6 +433,8 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA) {
       }
       
       check_log_concave(hprime_Tk)
+      
+      ## Update the zk.
       
       zk <- calc_z(Tk, h_Tk, hprime_Tk)
       
