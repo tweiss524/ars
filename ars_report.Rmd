@@ -11,6 +11,16 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Package Installation
 
+The files for creating the `ars` package can be found at https://github.berkeley.edu/tweiss/ars.git. In order to install the package in RStudio, refer to the following instructions:
+
+1. clone the repository to your local environment using `git clone "https://github.berkeley.edu/tweiss/ars.git"`
+
+2. set your working directory in RStudio to the directory ars directory you just cloned
+
+3. type `devtools::load_all()` into your console
+
+4. `library(ars)`
+
 
 # Introduction
 
@@ -112,7 +122,13 @@ We ran this function every time we defined new points in $T_k$ (and thus calcula
 
 # Tests
 
-DESCRIBE HERE HOW TO RUN THE TESTS\
+In order to run our specified set of tests, refer to the following instructions:
+
+**IMPORTANT:** you must 
+
+1. In order to test the main `ars()` function: `testthat::test_file("tests/testthat/test-ars.R")`
+
+2. In order to test the auxiliary funtions: `testthat::test_file("tests/testthat/test-ars_functions.R")`
 \
 In order to run the tests for our function, we created an R script which utilized the R package `testthat`. We designed a number of tests in order to ensure that our function works as desired. The first set of tests was designed to ensure that the `ars()` function errors out when the user inputs a non-log-concave function `f`. Some known densities that are not log-concave include the pareto distribution, the t-distribution, and the lognormal distribution. Thus, we inputted these densities as our function `f` to make sure the `ars()` function returned an error. The second set of tests was designed to ensure that the `ars()` function errors out when the user enters invalid inputs. Some example tests we ran were inputting a value for `f` that was not a function and inputting a non-numeric argument for the number of samples `n`. The last set of tests was designed to check that our `ars()` function returned a vector of samples that resembled a vector of samples of the same length from its respective distribution. In order to do this, we implemented the Kolmogorov-Smirnov test. As a basic summary, the Kolmogorov-Smirnov test is a nonparametric test based on the empirical CDF function that tests the equality of samples from a continuous distribution with samples from a reference distribution, given that the distribution is fully specified (i.e. rate, shape, etc. parameters ar provided). The Kolmogorov-Smirnov test statistic is defined as $$ D = \sup_x|F_0(x) - F_{data}(x)|,$$ where $F_0(x)$ is the CDF of the hypothesized distribution ("true" distribution) and $F_{data}(x)$ is the empirical CDF of the observed data (data coming from `ars()`). The null and alternative hypotheses are
 $$
@@ -129,6 +145,11 @@ We also wrote an R script to test that our auxiliary functions were providing re
 # Examples
 
 To visualize the results of our `ars()` function, below is an implementation of the function utilizing some common densities with a histogram of the samples compared to the actual curve of the distribution displayed on top.
+
+```{r}
+devtools::load_all()
+library(ars)
+```
 
 ### Example 1: Standard Normal
 ```{r}
