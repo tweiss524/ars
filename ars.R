@@ -31,10 +31,7 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA) {
   }
   print("xinit")
   print(x_init)
-  print("val:")
-  print(optim(1, f, method = 'BFGS', control = list(fnscale=-1))$val)
-  print("f(xinit)")
-  print(f(x_init))
+
   assertthat::assert_that(is.function(f), msg = "f must be a function")
   assertthat::assert_that(is.numeric(n), msg = "n must be numeric")
   assertthat::assert_that(is.numeric(x_init), msg = "x_init must be numeric")
@@ -218,53 +215,56 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA) {
   
   
   calc_probs <- function(Tk, zk, h_Tk, hprime_Tk) {
-
+    
+    
     z_all <- c(bounds[1], zk, bounds[2])
     num_bins <- length(z_all) - 1
-    #print(paste("z-all:", z_all))
-
+    print(paste("z-all:", z_all))
+    
     z_2 <- z_all[2:length(z_all)]
     z_1 <- z_all[1:num_bins]
-
-    s <- exp(h_Tk - hprime_Tk*Tk)
-    s[is.infinite(s) | is.na(s)] <- 0
-    #print(paste("s", s))
-
-    cdf_vals <- s*(z_2 - z_1)
-    cdf_vals[hprime_Tk!=0] <- (s[hprime_Tk!=0]/hprime_Tk[hprime_Tk!=0]) * (exp(z_2[hprime_Tk!=0]*(hprime_Tk[hprime_Tk!=0])) - exp(z_1[hprime_Tk!=0]*(hprime_Tk[hprime_Tk!=0])))
-    #cdf_vals[hprime_Tk==0] <- s*(z_2 - z_1)
-    #print(paste("cdf_vals:", cdf_vals))
-
-    normalizing_constant <- sum(cdf_vals)
-    normalized_b <- s/normalizing_constant
-    #print(paste("normalized_b:", normalized_b))
-
-    weighted_prob <- normalized_b*(z_2-z_1)
-    #print(paste("weighted_prob:", weighted_prob))
-    weighted_prob[hprime_Tk!=0] <- normalized_b[hprime_Tk!=0]/hprime_Tk[hprime_Tk!=0]*(exp(hprime_Tk[hprime_Tk!=0]*z_2[hprime_Tk!=0]) - exp(hprime_Tk[hprime_Tk!=0]*z_1[hprime_Tk!=0]))
-    weighted_prob[is.infinite(weighted_prob) | weighted_prob <= 0] <- 0
-    return(list(normalized_b, weighted_prob))
+    z_ind <- which(hprime_Tk!=0)
+    
+    u_z1 <- u(z_1,zk,Tk,h_Tk,hprime_Tk)
+    u_z2 <- u(z_2,zk,Tk,h_Tk,hprime_Tk)
+    
+    unnormalized_prob <- exp(u_z1)*(z_2-z_1)
+    unnormalized_prob[z_ind] <- (exp(u_z2[z_ind])-exp(u_z1[z_ind]))/hprime_Tk[z_ind]
+    
+    ## Normalize the probability
+    normalized_prob <- unnormalized_prob/sum(unnormalized_prob)
+    
+    
+    
+    return(list(normalized_prob,unnormalized_prob))
   }
   
-
-
+  
+  ## Conduct the inverse CDF for sampling.
   sample_sk <- function(Tk, zk, h_Tk, hprime_Tk) {
-
+    
     z_all <- c(bounds[1], zk, bounds[2])
-
-    b <- calc_probs(Tk, zk, h_Tk, hprime_Tk)[[1]]
-    prob <- calc_probs(Tk, zk, h_Tk, hprime_Tk)[[2]]
+    num_bins <- length(z_all) - 1
+    z_1 <- z_all[1:num_bins]
+    
+    
+    prob <- calc_probs(Tk, zk, h_Tk, hprime_Tk)[[1]]
+    unnorm_prob <- calc_probs(Tk, zk, h_Tk, hprime_Tk)[[2]]
     #prob[(prob <= 0) | (is.na(prob))] <- 0
     #print(b)
     #print("Probs:")
     #print(prob)
+    u_z1 <- u(z_1,zk,Tk,h_Tk,hprime_Tk)
     i <- sample(length(prob), size = 1, prob = prob)
-    u <- runif(1)
-    x_star <- ifelse(hprime_Tk[i] == 0, z_all[i]+prob[i]*u/b[i],
-                     (1/hprime_Tk[i]) * log(u * (hprime_Tk[i]*prob[i]/b[i])+ exp(hprime_Tk[i]*z_all[i])))
-
+    unif <- runif(1)
+    x_star <- ifelse(hprime_Tk[i] == 0, z_all[i]+unif*(z_all[i+1]-z_all[i]),
+                     (log(unif * unnorm_prob[i] * hprime_Tk[i] + exp(u_z1[i]))-h_Tk[i]+hprime_Tk[i]*Tk[i])/hprime_Tk[i])
+    print(hprime_Tk)
+    print(prob)
+    print(x_star)
     return(x_star)
   }
+  
   
   
   
