@@ -128,8 +128,58 @@ We also wrote an R script to test that our auxiliary functions were providing re
 
 # Examples
 
-To visualize the results of our `ars()` function, below is an implementation of the function utilizing some common densities (LIST DENSITIES HERE) with a histogram of the samples compared to the actual curve of the distribution displayed on top.
-CALL FUNCTION AND CREATE PLOTS.
+To visualize the results of our `ars()` function, below is an implementation of the function utilizing some common densities with a histogram of the samples compared to the actual curve of the distribution displayed on top.
+
+### Example 1: Standard Normal
+```{r}
+
+samps <- ars(dnorm, n = 5000, bounds = c(-Inf, Inf), x_init = 1)
+hist(samps, xlab = "x", main = "Samples from a Normal(0, 1) Distribution",
+     freq = F)
+curve(dnorm(x), col = "red", add = T)
+
+```
+
+### Example 2: Exponential
+```{r}
+
+samps <- ars(function(x){dexp(x, 5)}, n = 5000, bounds = c(0, Inf), x_init = 1)
+hist(samps, xlab = "x", main = "Samples from an Exponential(5) Distribution",
+     freq = F)
+curve(dexp(x, 5), col = "red", add = T)
+
+```
+
+### Example 3: Standard Uniform
+```{r}
+
+samps <- ars(dunif, n = 5000, bounds = c(0, 1), x_init = 0.5)
+hist(samps, xlab = "x", main = "Samples from a Uniform(0, 1) Distribution",
+     freq = F)
+curve(dunif(x), col = "red", add = T)
+
+```
+
+### Example 4: Beta
+```{r}
+
+samps <- ars(function(x){dbeta(x, 4, 3)}, n = 5000, bounds = c(0, 1))
+hist(samps, xlab = "x", main = "Samples from a Beta(4, 3) Distribution",
+     freq = F)
+curve(dbeta(x, 4, 3), col = "red", add = T)
+
+```
+
+### Example 5: Gamma
+```{r}
+
+samps <- ars(function(x){dgamma(x, 4, 3)}, n = 5000, bounds = c(0, Inf),
+             x_init = 1)
+hist(samps, xlab = "x", main = "Samples from a Gamma(4, 3) Distribution",
+     freq = F)
+curve(dgamma(x, 4, 3), col = "red", add = T)
+
+```
 
 # Contributions
 
