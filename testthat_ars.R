@@ -1,7 +1,7 @@
 
 
 
-library(test_that)
+library(testthat)
 
 
 # Functions for testing are helper functions within ars:
@@ -21,7 +21,7 @@ test_that("errors out for non log-concave functions", {
   expect_error(ars(f_t, 1000, bounds = c(-5,5), x_init = 1), "Function is not log-concave")
   
   # pareto dist
-  f_par <- function(x) {dpareto(x, 6, 2)}
+  f_par <- function(x) {rmutil::dpareto(x, 6, 2)}
   expect_error(ars(f_par, n = 1000, bounds = c(1, Inf), x_init = 2), "Function is not log-concave")
   
   # lognormal dist
