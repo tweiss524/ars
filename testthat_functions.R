@@ -185,18 +185,19 @@ test_that('test that l computes calculations correctly',{
 })
 
 
-
-test_that('test the calc_probs function',{
+# test for calc_probs()
+test_that('test the calc_probs function computes calcuations correctly',{
   
   
   tk_1 <- c(0.000,1.052)
-  zk_1 <- c(0.562)
+  zk_1 <- 0.562
   h_tk_1 <- c(-3.751,-3.682)
   
   ## The first element 
-  hprime_tk_1 <- c(0,0.062)
-  bounds_1 <- c(0,4)
+  hprime_tk_1 <- c(0, 0.062)
+  bounds_1 <- c(0, 4)
   
+  # simulating calculations
   z_all_1 <- c(bounds_1[1], zk_1, bounds_1[2])
   num_bins_1 <- length(z_all_1) - 1
   z_1_1 <- z_all_1[1:num_bins_1]
@@ -204,7 +205,11 @@ test_that('test the calc_probs function',{
   u_z1_1 <- u(z_1_1, zk_1, tk_1, h_tk_1, hprime_tk_1) # c(-3.751,-3.71238)
   u_z2_1 <- u(z_2_1, zk_1, tk_1, h_tk_1, hprime_tk_1) # c(-3.71238,-3.499224)
   
-  unnormalized_prob_man_1 <- c(exp(-3.751)*(0.562-0),(exp(-3.499224)-exp(-3.71238))/0.062)
+  # manual
+  unnormalized_prob_man_1 <- c(exp(-3.751)*(0.562-0),
+                               (exp(-3.499224) - exp(-3.71238))/0.062)
+  
+  # function
   unnormalized_prob_fun_1 <- calc_probs(tk_1, zk_1, h_tk_1, hprime_tk_1, bounds_1)[[2]]
   
   
