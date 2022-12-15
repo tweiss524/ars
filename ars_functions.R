@@ -1,133 +1,155 @@
 
-
-check_input <- function(f, n, bounds, k, x_init, mu) {
-  
-  assertthat::assert_that(is.function(f), msg = "f must be a function")
-  assertthat::assert_that(is.numeric(n), msg = "n must be an integer")
-  assertthat::assert_that(is.numeric(x_init), msg = "x_init must be an integer")
-  assertthat::assert_that(is.numeric(mu), msg = "mu must be numeric")
-  assertthat::assert_that(is.vector(bounds) && (length(bounds) == 2) && (is.numeric(bounds)), msg = "Bounds must be numeric vector of length 2")
-  
-  if (bounds[1] > bounds[2]) {
-    
-    bounds <<- sort(bounds)
-    bounds <- sort(bounds)
-    
-    warning(paste0("Lower bound must be smaller than upper bound. ", 
-            sprintf("New bounds are (%s, %s)", bounds[1], bounds[2])))
-    
-  }
-  
-  if (bounds[1] == bounds[2]) {
-    
-    bounds <<- c(-Inf, Inf)
-    bounds <- c(-Inf, Inf)
-    
-    warning(paste0("Lower bound must be smaller than upper bound. ", 
-                   sprintf("New bounds are (%s, %s)", bounds[1], bounds[2])))
-    
-  }
-  
-  assertthat::assert_that((is.numeric(k)) && (k > 0), msg = "k must be a positive integer")
-  
-  assertthat::assert_that((x_init >= bounds[1]) && (x_init <= bounds[2]), msg = "Inital point must be inside bounds")
-  
-}
-
-################################################################################
-
-h <- function(x) {
-  return(log(f(x)))
-}
-
-################################################################################
-
-
-hprime <- function(x) {
-  der <- numDeriv::grad(h, x)
-  return(der)
-}
-
-###############################################################################
-
-
 check_log_concave <- function(x){
-  ep <- 1e-8
+  # ensure that h'(x) is decreasing monotonically
   n <- length(x)
-  assertthat::assert_that(x[2:n] - x[1:n-1] < ep, msg = "Function is not log-concave")
+  assertthat::assert_that(sum(x[2:n] - x[1:n-1] <= 1e-8) == n-1, msg = "Function is not log-concave")
 }
 
-
-###############################################################################
-
-z <- function(x1, x2, h, hprime) {
+## Take in x_init and bounds to generate the abcissae sets, Tk.
+initialize_abcissae <- function(x_init, hprime, bounds) {
   
-  return((h(x2) - h(x1) - x2 * hprime(x2) + x1* hprime(x1))/(hprime(x1)-hprime(x2)))
+  x1 <- bounds[1]
+  xk <- bounds[2]
   
-}
-
-
-initialize_Tk <- function(k, bounds, hprime, mu) {
-  
-  if((bounds[1] == -Inf) && (bounds[2] == Inf)) {
-    x <- mu - 10
-    y <- mu + 10
+  ## 
+  inc <- 0.25
+  if (bounds[1] == -Inf) {
+    x1 <- x_init - 0.1
+    while(!is.na(hprime(x1)) && hprime(x1) <= 0){
+      x1 <- x1 - inc
+      inc <- inc * 2
+    }
     
-    while((!is.finite(hprime(x))) && (!is.finite(hprime(y)))) {
-      x <- x + 1
-      y <- y - 1
-      
-      if (x >= y) {
-        stop("Invalid Bounds.")
+    if(is.na(hprime(x1))) {
+      stop("Please provide x_init with a finite derivative")
+    }
+    
+  }
+  
+  if (bounds[2] == Inf) {
+    xk <- x_init + 0.1
+    while (!is.na(hprime(xk)) && hprime(xk) >= 0) {
+      xk <- xk + inc
+      inc <- inc * 2
+    }
+    
+    if(is.na(hprime(xk))) {
+      stop("Please provide x_init with a finite derivative")
+    }
+    
+  }
+  
+  if ((bounds[1] != -Inf) && (bounds[2] != Inf)) {
+    x1 <- bounds[1]
+    xk <- bounds[2]
+    #print(paste("Bound 1:", x1))
+    #print(paste("Bound 2:", x2))
+  }
+  #print(paste("x1:", x1))
+  #print(paste("xk:", xk))
+  return(seq(x1, xk, length.out = 20))
+}
+
+
+# Take in tk, h_tk, hprime_tk to calculate zk, the intersection points of the tangents for each elements in Tk. 
+
+calc_z <- function(tk, h_tk, hprime_tk) {
+  n <- length(tk)
+  if (n == 1) {
+    return(c())
+  }
+  
+  return((h_tk[2:n] - h_tk[1:(n-1)] - tk[2:n] * hprime_tk[2:n] + tk[1:(n-1)]* hprime_tk[1:(n-1)])/(hprime_tk[1:(n-1)]-hprime_tk[2:n]))
+  
+}
+
+
+# Calculate the rejection envelope on Tk.
+
+u <- function(x, zk, Tk, h_Tk, hprime_Tk) {
+  if (length(zk)==0){
+    j <- 1
+  }else{
+    j <- findInterval(x, zk) + 1
+  }
+  calc_u <- function(x){
+    u_result <- h_Tk[j] + (x-Tk[j])*hprime_Tk[j]
+    return(u_result)
+  }
+  return(calc_u(x))
+}
+
+
+# Calculate the squeezing function on Tk.
+
+l <- function(x, Tk, h_Tk, hprime_Tk) {
+  if(length(Tk)==1){
+    return(u(x, zk, Tk, h_Tk, hprime_Tk))
+  }else{
+    j <- findInterval(x, Tk)
+    if( (j == 0) || (j == length(Tk)) ) {
+      return(-Inf)
+    } else {
+      calc_l <- function(x) {
+        l_result <- ((Tk[j+1] - x) * h_Tk[j] + (x - Tk[j]) * h_Tk[j+1]) / (Tk[j+1] - Tk[j])
+        return(l_result)
       }
       
-    }
-    
-    bounds[1] <- x
-    bounds[2] <- y
-    
-  }
-  
-  if((bounds[1] == -Inf) && (bounds[2] != Inf)) {
-    
-    x <- bounds[2] - 20
-    
-    while((hprime(x) <= 0) && (hprime(x) != Inf) && (x < bounds[2])) {
-      x <- x + 1
-    }
-    
-    if((hprime(x) == Inf) | (x >= bounds[2])) {
-      stop("Invalid Bounds.")
-    }
-    
-    bounds[1] <- x
-    
-  }
-  
-  if((bounds[1] != -Inf) && (bounds[2] == Inf)) {
-    
-    y <- bounds[1] + 20
-    
-    while((hprime(y) >= 0) && (hprime(y) != -Inf) && (y > bounds[1])) {
-      y <- y - 1
-    }
-    
-    if((hprime(y) == -Inf) | (y <= bounds[1])) {
-      stop("Invalid Bounds.")
-    }
-    
-    bounds[2] <- y
-    
-  }
-  
-  if((bounds[1] != -Inf) && (bounds[2] != Inf)) {
-    
-    if((!is.finite(hprime(bounds[1]))) || (!is.finite(hprime(bounds[2])))) {
-      stop("Invalid bounds.")
+      return(calc_l(x))
+      
     }
   }
-  
-  return(seq(bounds[1], bounds[2], length.out = k))
 }
 
 
+
+calc_probs <- function(Tk, zk, h_Tk, hprime_Tk, bounds) {
+  
+  
+  z_all <- c(bounds[1], zk, bounds[2])
+  num_bins <- length(z_all) - 1
+  print(paste("z-all:", z_all))
+  
+  z_2 <- z_all[2:length(z_all)]
+  z_1 <- z_all[1:num_bins]
+  z_ind <- which(hprime_Tk!=0)
+  
+  u_z1 <- u(z_1,zk,Tk,h_Tk,hprime_Tk)
+  u_z2 <- u(z_2,zk,Tk,h_Tk,hprime_Tk)
+  
+  unnormalized_prob <- exp(u_z1)*(z_2-z_1)
+  unnormalized_prob[z_ind] <- (exp(u_z2[z_ind])-exp(u_z1[z_ind]))/hprime_Tk[z_ind]
+  
+  ## Normalize the probability
+  normalized_prob <- unnormalized_prob/sum(unnormalized_prob)
+  
+  
+  
+  return(list(normalized_prob,unnormalized_prob))
+}
+
+
+## Conduct the inverse CDF for sampling.
+sample_sk <- function(Tk, zk, h_Tk, hprime_Tk, bounds) {
+  
+  z_all <- c(bounds[1], zk, bounds[2])
+  num_bins <- length(z_all) - 1
+  z_1 <- z_all[1:num_bins]
+  
+  p <- calc_probs(Tk, zk, h_Tk, hprime_Tk, bounds)
+  prob <- p[[1]]
+  unnorm_prob <- p[[2]]
+  #prob[(prob <= 0) | (is.na(prob))] <- 0
+  #print(b)
+  #print("Probs:")
+  #print(prob)
+  u_z1 <- u(z_1,zk,Tk,h_Tk,hprime_Tk)
+  i <- sample(length(prob), size = 1, prob = prob)
+  unif <- runif(1)
+  x_star <- ifelse(hprime_Tk[i] == 0, z_all[i]+unif*(z_all[i+1]-z_all[i]),
+                   (log(unif * unnorm_prob[i] * hprime_Tk[i] + exp(u_z1[i]))-h_Tk[i]+hprime_Tk[i]*Tk[i])/hprime_Tk[i])
+  print(hprime_Tk)
+  print(prob)
+  print(x_star)
+  return(x_star)
+}
