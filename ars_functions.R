@@ -7,6 +7,11 @@
 # and checks that it is monotonically decreasing
 check_log_concave <- function(x) {
   n <- length(x)
+  
+  # only one element mean log-concave
+  if (n == 1) {
+    return(0)
+  }
   assertthat::assert_that(sum(x[2:n] - x[1:(n-1)] <= 1e-8) == n-1, msg = "Function is not log-concave")
 }
 
