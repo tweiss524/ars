@@ -136,3 +136,14 @@ CALL FUNCTION AND CREATE PLOTS.
 # References
 
 Reference Gilks Paper, https://www.statisticshowto.com/kolmogorov-smirnov-test/, https://www.itl.nist.gov/div898/handbook/eda/section3/eda35g.htm
+
+
+# Contributions
+
+In completing this project, we found a way to divide the work up evenly among all group members. While the following lists the specific tasks of each group member, all group members assisted in essentially every task, helping to debug and answer questions when others got stuck.
+
+* Jeffrey Kuo -
+
+* Hsiang-Chaun Sha - 
+
+* Tessa Weiss - 
