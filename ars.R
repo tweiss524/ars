@@ -159,8 +159,9 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA) {
     if (n == 1) {
       return(c())
     }
-
-    return((h_tk[2:n] - h_tk[1:(n-1)] - tk[2:n] * hprime_tk[2:n] + tk[1:(n-1)]* hprime_tk[1:(n-1)])/(hprime_tk[1:(n-1)]-hprime_tk[2:n]))
+    z_res <- (h_tk[2:n] - h_tk[1:(n-1)] - tk[2:n] * hprime_tk[2:n] + tk[1:(n-1)] *
+                hprime_tk[1:(n-1)])/(hprime_tk[1:(n-1)] - hprime_tk[2:n])
+    return(z_res)
 
   }
 
@@ -168,13 +169,13 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA) {
   # Calculate the rejection envelope on Tk.
 
   u <- function(x, zk, Tk, h_Tk, hprime_Tk) {
-    if (length(zk)==0){
+    if (length(zk) == 0){
       j <- 1
-    }else{
+    } else {
       j <- findInterval(x, zk) + 1
     }
-    calc_u <- function(x){
-      u_result <- h_Tk[j] + (x-Tk[j])*hprime_Tk[j]
+    calc_u <- function(x) {
+      u_result <- h_Tk[j] + (x-Tk[j]) * hprime_Tk[j]
       return(u_result)
     }
     return(calc_u(x))
@@ -210,13 +211,13 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA) {
 
     z_2 <- z_all[2:length(z_all)]
     z_1 <- z_all[1:num_bins]
-    z_ind <- which(hprime_Tk!=0)
+    z_ind <- which(hprime_Tk != 0)
 
-    u_z1 <- u(z_1,zk,Tk,h_Tk,hprime_Tk)
-    u_z2 <- u(z_2,zk,Tk,h_Tk,hprime_Tk)
+    u_z1 <- u(z_1, zk, Tk, h_Tk, hprime_Tk)
+    u_z2 <- u(z_2, zk, Tk, h_Tk, hprime_Tk)
 
-    unnormalized_prob <- exp(u_z1)*(z_2-z_1)
-    unnormalized_prob[z_ind] <- (exp(u_z2[z_ind])-exp(u_z1[z_ind]))/hprime_Tk[z_ind]
+    unnormalized_prob <- exp(u_z1) * (z_2 - z_1)
+    unnormalized_prob[z_ind] <- (exp(u_z2[z_ind]) - exp(u_z1[z_ind])) / hprime_Tk[z_ind]
 
     ## Normalize the probability
     normalized_prob <- unnormalized_prob/sum(unnormalized_prob)
@@ -243,14 +244,15 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA) {
     #print(b)
     #print("Probs:")
     #print(prob)
-    u_z1 <- u(z_1,zk,Tk,h_Tk,hprime_Tk)
+    u_z1 <- u(z_1, zk, Tk, h_Tk, hprime_Tk)
     i <- sample(length(prob), size = 1, prob = prob)
     unif <- runif(1)
-    x_star <- ifelse(hprime_Tk[i] == 0, z_all[i]+unif*(z_all[i+1]-z_all[i]),
-                     (log(unif * unnorm_prob[i] * hprime_Tk[i] + exp(u_z1[i]))-h_Tk[i]+hprime_Tk[i]*Tk[i])/hprime_Tk[i])
-    print(hprime_Tk)
-    print(prob)
-    print(x_star)
+    x_star <- ifelse(hprime_Tk[i] == 0, z_all[i] + unif*(z_all[i+1]-z_all[i]),
+                     (log(unif * unnorm_prob[i] * hprime_Tk[i] + exp(u_z1[i])) - 
+                        h_Tk[i] + hprime_Tk[i] * Tk[i]) / hprime_Tk[i])
+    #print(hprime_Tk)
+    #print(prob)
+    #print(x_star)
     return(x_star)
   }
   
