@@ -26,7 +26,7 @@ test_that('initialize_abscissae returns sequence of proper length', {
   xinit_1 <- -6
   bounds_1 <- c(-Inf, 0)
   h_1 <- function(x) {-x - 20}
-  expect_equal(length(initialize_abcissae(xinit_1, h_1, bounds_1)), 20)
+  expect_equal(length(initialize_abscissae(xinit_1, h_1, bounds_1)), 20)
   
   
   # case of infinite right bound
@@ -35,13 +35,13 @@ test_that('initialize_abscissae returns sequence of proper length', {
   xinit_2 <- -6
   bounds_2 <- c(0, Inf)
   h_2 <- function(x) {-x}
-  expect_equal(length(initialize_abcissae(xinit_2, h_2, bounds_2)), 20)
+  expect_equal(length(initialize_abscissae(xinit_2, h_2, bounds_2)), 20)
   
   # case of finite bounds
   xinit_3 <- -6
   bounds_3 <- c(-5, 5)
   h_3 <- function(x) {-2*x}
-  expect_equal(length(initialize_abcissae(xinit_3, h_3, bounds_2)), 20)
+  expect_equal(length(initialize_abscissae(xinit_3, h_3, bounds_2)), 20)
   
 })
 
