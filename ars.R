@@ -1,4 +1,9 @@
 
+##### MAIN ARS FUNCTION #####
+#############################
+
+
+
 #' Adaptive Rejection Sampling
 #'
 #' \code{ars}
@@ -11,9 +16,9 @@
 #'
 #'
 #' @param f function from which to generate samples from
-#' @param n numbers of desired samples. default is 1000
-#' @param bounds vector of length 2 defining the lower and upper bounds of the distribution f. default is (-Inf, Inf)
-#' @param x_init initial point within the bounds that is used to initialize the abscissae points. default is NA
+#' @param n numbers of desired samples; default is 1000
+#' @param bounds vector of length 2 defining the lower and upper bounds of the distribution f; default is (-Inf, Inf)
+#' @param x_init initial point within the bounds that is used to initialize the abscissae points; default is NA
 #'
 #' @return returns a vector of n samples from the distribution function f
 #'
