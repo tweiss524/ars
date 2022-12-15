@@ -36,6 +36,7 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA) {
   assertthat::assert_that(is.function(f), msg = "f must be a function")
   assertthat::assert_that(is.numeric(n), msg = "n must be numeric")
   assertthat::assert_that(is.numeric(x_init), msg = "x_init must be numeric")
+  assertthat::assert_that(f(x_init) > 1e-8, msg = "x_init must have positive probability at f")
   
   assertthat::assert_that(is.vector(bounds) && (length(bounds) == 2) && (is.numeric(bounds)), msg = "Bounds must be numeric vector of length 2")
   
@@ -90,6 +91,165 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA) {
   
   
   
+  check_log_concave <- function(x){
+    # ensure that h'(x) is decreasing monotonically
+    n <- length(x)
+    assertthat::assert_that(sum(x[2:n] - x[1:n-1] <= 1e-8) == n-1, msg = "Function is not log-concave")
+  }
+
+  ## Take in x_init and bounds to generate the abcissae sets, Tk.
+  initialize_abcissae <- function(x_init, hprime, bounds) {
+
+    x1 <- bounds[1]
+    xk <- bounds[2]
+
+    ##
+    inc <- 0.25
+    if (bounds[1] == -Inf) {
+      x1 <- x_init - 0.1
+      while(!is.na(hprime(x1)) && hprime(x1) <= 0){
+        x1 <- x1 - inc
+        inc <- inc * 2
+      }
+
+      if(is.na(hprime(x1))) {
+        stop("Please provide x_init with a finite derivative")
+      }
+
+    }
+
+    if (bounds[2] == Inf) {
+      xk <- x_init + 0.1
+      while (!is.na(hprime(xk)) && hprime(xk) >= 0) {
+        xk <- xk + inc
+        inc <- inc * 2
+      }
+
+      if(is.na(hprime(xk))) {
+        stop("Please provide x_init with a finite derivative")
+      }
+
+    }
+
+    if ((bounds[1] != -Inf) && (bounds[2] != Inf)) {
+      x1 <- bounds[1]
+      xk <- bounds[2]
+      #print(paste("Bound 1:", x1))
+      #print(paste("Bound 2:", x2))
+    }
+    #print(paste("x1:", x1))
+    #print(paste("xk:", xk))
+    return(seq(x1, xk, length.out = 20))
+  }
+
+
+  # Take in tk, h_tk, hprime_tk to calculate zk, the intersection points of the tangents for each elements in Tk.
+  #
+  calc_z <- function(tk, h_tk, hprime_tk) {
+    n <- length(tk)
+    if (n == 1) {
+      return(c())
+    }
+
+    return((h_tk[2:n] - h_tk[1:(n-1)] - tk[2:n] * hprime_tk[2:n] + tk[1:(n-1)]* hprime_tk[1:(n-1)])/(hprime_tk[1:(n-1)]-hprime_tk[2:n]))
+
+  }
+
+
+  # Calculate the rejection envelope on Tk.
+
+  u <- function(x, zk, Tk, h_Tk, hprime_Tk) {
+    if (length(zk)==0){
+      j <- 1
+    }else{
+      j <- findInterval(x, zk) + 1
+    }
+    calc_u <- function(x){
+      u_result <- h_Tk[j] + (x-Tk[j])*hprime_Tk[j]
+      return(u_result)
+    }
+    return(calc_u(x))
+  }
+
+
+  # Calculate the squeezing function on Tk.
+
+  l <- function(x, Tk, h_Tk, hprime_Tk) {
+    if(length(Tk)==1){
+      return(u(x, zk, Tk, h_Tk, hprime_Tk))
+    }else{
+      j <- findInterval(x, Tk)
+      if( (j == 0) || (j == length(Tk)) ) {
+        return(-Inf)
+      } else {
+        calc_l <- function(x) {
+          l_result <- ((Tk[j+1] - x) * h_Tk[j] + (x - Tk[j]) * h_Tk[j+1]) / (Tk[j+1] - Tk[j])
+          return(l_result)
+        }
+
+        return(calc_l(x))
+
+      }
+    }
+  }
+
+
+
+  calc_probs <- function(Tk, zk, h_Tk, hprime_Tk, bounds) {
+
+
+    z_all <- c(bounds[1], zk, bounds[2])
+    num_bins <- length(z_all) - 1
+    print(paste("z-all:", z_all))
+
+    z_2 <- z_all[2:length(z_all)]
+    z_1 <- z_all[1:num_bins]
+    z_ind <- which(hprime_Tk!=0)
+
+    u_z1 <- u(z_1,zk,Tk,h_Tk,hprime_Tk)
+    u_z2 <- u(z_2,zk,Tk,h_Tk,hprime_Tk)
+
+    unnormalized_prob <- exp(u_z1)*(z_2-z_1)
+    unnormalized_prob[z_ind] <- (exp(u_z2[z_ind])-exp(u_z1[z_ind]))/hprime_Tk[z_ind]
+
+    ## Normalize the probability
+    normalized_prob <- unnormalized_prob/sum(unnormalized_prob)
+
+
+
+    return(list(normalized_prob,unnormalized_prob))
+  }
+
+
+  ## Conduct the inverse CDF for sampling.
+  sample_sk <- function(Tk, zk, h_Tk, hprime_Tk, bounds) {
+
+    z_all <- c(bounds[1], zk, bounds[2])
+    num_bins <- length(z_all) - 1
+    z_1 <- z_all[1:num_bins]
+    print("bounds")
+    print(bounds[1])
+    print(bounds[2])
+    p <- calc_probs(Tk, zk, h_Tk, hprime_Tk, bounds)
+    prob <- p[[1]]
+    unnorm_prob <- p[[2]]
+    #prob[(prob <= 0) | (is.na(prob))] <- 0
+    #print(b)
+    print("Probs:")
+    print(prob)
+    u_z1 <- u(z_1,zk,Tk,h_Tk,hprime_Tk)
+    i <- sample(length(prob), size = 1, prob = prob)
+    unif <- runif(1)
+    x_star <- ifelse(hprime_Tk[i] == 0, z_all[i]+unif*(z_all[i+1]-z_all[i]),
+                     (log(unif * unnorm_prob[i] * hprime_Tk[i] + exp(u_z1[i]))-h_Tk[i]+hprime_Tk[i]*Tk[i])/hprime_Tk[i])
+    print(hprime_Tk)
+    print(prob)
+    print(x_star)
+    return(x_star)
+  }
+  
+  
+  
   ########## INITIALIZING STEP ##########
   
   Tk <- initialize_abcissae(x_init, hprime, bounds)
@@ -106,7 +266,8 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA) {
   Tk <- Tk[is.finite(h_Tk)]
   h_Tk <- h_Tk[is.finite(h_Tk)]
   assertthat::assert_that(length(h_Tk) > 0, msg = "Function not defined in bounds")
-  
+  print("newTk")
+  print(Tk)
   
   hprime_Tk <- sapply(Tk, hprime)
   print("Found derivative")
@@ -153,8 +314,9 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA) {
   #   Tk <- Tk[which(hprime_Tk == unique(hprime_Tk))]
   #   h_Tk <- h_Tk[which(hprime_Tk == unique(hprime_Tk))]
   # }
-
+  
   check_log_concave(hprime_Tk)
+  
   
   
   
@@ -182,6 +344,10 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA) {
     # print(zk)
     # print(Tk)
     #print(paste("u", u(xstar, zk, Tk, h_Tk, hprime_Tk)))
+    print("Got xstar")
+    print(xstar)
+    print("zk")
+    print(zk)
     assertthat::assert_that((xstar >= bounds[1]) && (xstar <= bounds[2]), msg = "sampled xstar not in bounds")
     #zk <- sort(zk)
     #assertthat::assert_that((l(xstar, Tk, h_Tk, hprime_Tk) <= h(xstar)) && (h(xstar) <= u(xstar, zk, Tk, h_Tk, hprime_Tk)), msg = "lhu test: Not log concave")
@@ -189,6 +355,8 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA) {
     
     ## squeezing test
     if(w <= exp(l(xstar, Tk, h_Tk, hprime_Tk) - u(xstar, zk, Tk, h_Tk, hprime_Tk))) {
+      
+      print("made it in squeezing test")
       
       samps[num_samps] <- xstar
       num_samps <- num_samps + 1
@@ -243,8 +411,12 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA) {
 
 # # testing with normal
 # 
-hist(ars(f = function(x){dbeta(x, 4, 3)}, n = 1000, bounds = c(-4,1)), freq = F)
-hist(ars(f = function(x){dnorm(x, 1, 3)}, n = 1000, x_init = 1), freq = F)
+test <- ars(f = function(x){dnorm(x, 100000, 4)}, n = 1000, x_init = 1, bounds = c(-Inf,Inf))
+test
+hist(test)
+hist(ars(f = function(x){dunif(x, 10, 15)}, n = 10, x_init = 11, bounds= c(8, 17)), freq = F)
+
+getwd()
 
 # curve(dgamma(x, 3, 4), 0, add = TRUE, col = "red")
 # ars(f = dunif, n = 1000, bounds = c(0,1))
@@ -278,7 +450,7 @@ hist(ars(f = function(x){dnorm(x, 1, 3)}, n = 1000, x_init = 1), freq = F)
 # curve(dnorm(x, 0, 1), 0, 1,  add = TRUE, col = "red")
 # # 
 # # 
-test <- ars(f = dunif, n = 1000, bounds = c(10, 15), x_init = 11, min=10, max=15)
+test <- ars(f = function(x){dnorm(x, 5, 1)}, n = 1000, bounds = c(10, 15), x_init =11)
 hist(test, freq = F)
 curve(dunif(x, 10, 15), 10, 15,  add = TRUE, col = "red")
 
