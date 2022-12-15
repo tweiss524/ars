@@ -225,3 +225,44 @@ test_that('test the calc_probs function computes calcuations correctly',{
   
 })
 
+
+
+# test for sample_sk() function
+test_that('test that sample_sk computes calculations correctly',{
+  
+  
+  tk_1 <- c(0.000,1.052)
+  zk_1 <- c(0.562)
+  h_tk_1 <- c(-3.751,-3.682)
+  
+  ## The first element 
+  hprime_tk_1 <- c(0.062,0)
+  bounds_1 <- c(0,4)
+  
+  z_all_1 <- c(bounds_1[1], zk_1, bounds_1[2])
+  num_bins_1 <- length(z_all_1) - 1
+  z_1_1 <- z_all_1[1:num_bins_1]
+  u_z1_1 <- u(z_1_1, zk_1, tk_1, h_tk_1, hprime_tk_1) # c(-3.751,-3.682)
+  p <- calc_probs(tk_1, zk_1, h_tk_1, hprime_tk_1, bounds_1)
+  
+  # normalized
+  prob <- p[[1]] ## c(0.2382642, 0.7617358)
+  
+  # unnormalized
+  unnorm_prob <- p[[2]] ## c(0.02706999, 0.08654333)
+  
+  
+  unif <- 0.937642
+  i <- 2
+  
+  # manual computation
+  xstar_man_2 <- 0.562 +  0.937642*(4-0.562)
+  set.seed(6)
+  
+  # function
+  xstar_fun_2 <- sample_sk(tk_1, zk_1, h_tk_1, hprime_tk_1, bounds_1)
+  
+  
+  expect_equal(sum(which(abs(xstar_man_2-xstar_fun_2)<1e-7)),1)
+  
+})
