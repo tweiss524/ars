@@ -14,7 +14,8 @@ library(testthat)
 test_that("errors out for non log-concave functions", {
   
   # cauchy dist
-  expect_error(ars(dcauchy, n = 1000, x_init = 1, bounds = c(-10,10)), "Function is not log-concave")
+  f_cauchy <- function(x){dcauchy(x, 2,4)}
+  expect_error(ars(f_cauchy, n = 1000, x_init = 1, bounds = c(-10,10)), "Function is not log-concave")
   
   # t-dist
   f_t <- function(x) {dt(x, 4)}
