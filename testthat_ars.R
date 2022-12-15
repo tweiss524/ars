@@ -1,16 +1,3 @@
-
-
-
-library(testthat)
-
-
-# Functions for testing are helper functions within ars:
-
-# initialize abscsissae
-# u, l, z, calc_probs, sample_sk
-
-
-
 test_that("errors out for non log-concave functions", {
 
   # cauchy dist
@@ -76,10 +63,10 @@ test_that("provides samples close to actual distribution", {
   true_exp <- rexp(1000, 5)
   expect_equal(ks.test(exp_ars, true_exp)$p.value <= 0.05, FALSE)
 
-  # Chi-sqared(4)
-  f_chi <- function(x) {return(dchisq(x, 4))}
-  chi_ars <- ars(f_chi, n = 1000, bounds = c(0, Inf), x_init = 1)
-  true_chi <- rchisq(1000, 4)
-  expect_equal(ks.test(chi_ars, true_chi)$p.value <= 0.05, FALSE)
+  # Gamma(2,5)
+  f_gam <- function(x) {return(dgamma(x, 2, 5))}
+  gam_ars <- ars(f_gam, n = 1000, bounds = c(0, Inf), x_init = 1)
+  true_gam <- rgamma(1000, 2, 5)
+  expect_equal(ks.test(gam_ars, true_gam)$p.value <= 0.05, FALSE)
 
 })

@@ -44,7 +44,7 @@
 
 ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA) {
 
-  source("ars_functions.R")
+  #source("ars_functions.R")
 
   # if no initial point provided, take the mode of the function f as x_init
   if (is.na(x_init)) {
@@ -234,8 +234,8 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA) {
       # update the zk+1
       zk <- calc_z(Tk, h_Tk, hprime_Tk)
 
-      } # end else
-    } # end while
+    } # end else
+  } # end while
 
   return(samps)
 }
@@ -245,10 +245,10 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA) {
 #
 # # # testing with normal
 # #
-test <- ars(f = function(x){dnorm(x, 0, 1)}, n = 1000, x_init = 1, bounds = c(-Inf,Inf))
+#test <- ars(f = function(x){dnorm(x, 0, 1)}, n = 1000, x_init = 1, bounds = c(-Inf,Inf))
 # test
-hist(test)
-hist(ars(f = function(x){dexp(x, 4)}, n = 100, x_init = 1, bounds= c(0, Inf)), freq = F)
+#hist(test)
+#hist(ars(f = function(x){dexp(x, 4)}, n = 100, x_init = 1, bounds= c(0, Inf)), freq = F)
 #
 # getwd()
 #
