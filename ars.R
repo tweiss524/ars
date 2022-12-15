@@ -175,8 +175,6 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA) {
     # print(zk)
     # print(Tk)
     #print(paste("u", u(xstar, zk, Tk, h_Tk, hprime_Tk)))
-    print("Got xstar")
-    print(xstar)
     # print("zk")
     # print(zk)
     assertthat::assert_that((xstar >= bounds[1]) && (xstar <= bounds[2]), msg = "sampled xstar not in bounds")
