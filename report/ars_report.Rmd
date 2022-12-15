@@ -180,7 +180,7 @@ curve(dexp(x, 5), col = "red", add = T)
 ```{r}
 
 samps <- ars(function(x){dunif(x, 10, 15)}, n = 5000, bounds = c(10, 15), x_init = 11)
-hist(samps, xlab = "x", main = "Samples from a Uniform(0, 1) Distribution",
+hist(samps, xlab = "x", main = "Samples from a Uniform(10, 15) Distribution",
      freq = F)
 curve(dunif(x, 10, 15), col = "red", add = T)
 
