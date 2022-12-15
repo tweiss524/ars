@@ -22,13 +22,13 @@ test_that('test that calc_z computes calculation correctly',{
   
   # case where Tk has more than 1 value
   tk_2 <- c(0.000, 1.052)
-  h_tk2 <- -c(3.751, -3.682)
+  h_tk2 <- c(3.751, -3.682)
   hprime_tk2 <- c(0.069, 0.062)
   
   calc_z_normal_case <- calc_z(tk_2, h_tk2, hprime_tk2)
   
   # manual calculation
-  z_val <- (-3.682- (-3.751) - 1.052*0.062 + 0.000*0.069) / (0.069-0.062)
+  z_val <- (-3.682 - 3.751 - 1.052*0.062 + 0.000*0.069) / (0.069-0.062)
   
   expect_equal(calc_z_normal_case, z_val)
   
@@ -52,7 +52,7 @@ test_that('test that u computes calculations correctly', {
   
   
   # case when zk has more than 1 value
-  zk_2 <- c(0.526)
+  zk_2 <- c(0.526, 0.777)
   
   # case when x is on the left hand side of zk
   u_2 <- -3.751 + (x_1-0.000)*0.069
