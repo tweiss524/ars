@@ -1,7 +1,11 @@
 
+##### AUXILIARY FUNCTIONS FOR ARS #####
+#######################################
+
+
 # function check_log_concave takes vector of derivatives as input
 # and checks that it is monotonically decreasing
-check_log_concave <- function(x){
+check_log_concave <- function(x) {
   n <- length(x)
   assertthat::assert_that(sum(x[2:n] - x[1:n-1] <= 1e-8) == n-1, msg = "Function is not log-concave")
 }
