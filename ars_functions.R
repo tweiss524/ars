@@ -135,7 +135,9 @@ sample_sk <- function(Tk, zk, h_Tk, hprime_Tk, bounds) {
   z_all <- c(bounds[1], zk, bounds[2])
   num_bins <- length(z_all) - 1
   z_1 <- z_all[1:num_bins]
-  
+  print("bounds")
+  print(bounds[1])
+  print(bounds[2])
   p <- calc_probs(Tk, zk, h_Tk, hprime_Tk, bounds)
   prob <- p[[1]]
   unnorm_prob <- p[[2]]
