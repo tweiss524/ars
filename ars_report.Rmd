@@ -6,16 +6,20 @@ date: '2022-12-14'
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+library(knitr)
+# set global chunk options: images will be 7x5 inches
+knitr::opts_chunk$set(warning = F, message = F, fig.width = 7, fig.height = 5)
+options(digits = 4)
+library(tidyverse)
 ```
 
 # Package Installation
 
-The files for creating the `ars` package can be found at https://github.berkeley.edu/tweiss/ars.git. In order to install the package in RStudio, refer to the following instructions:
+The files for creating the `ars` package can be found at https://github.berkeley.edu/tweiss/ars.git. In order to install the package in RStudio, refer to the following instructions. Note that required packages are `assertthat`, `numDeriv`, `stats`, `rmutil`, and `testthat`. Also remember to clean your environment before installing the package to ensure there are no errors with installation.
 
 1. clone the repository to your local environment using `git clone "https://github.berkeley.edu/tweiss/ars.git"`
 
-2. set your working directory in RStudio to the directory ars directory you just cloned
+2. set your working directory in RStudio to the `ars` directory you just cloned
 
 3. type `devtools::load_all()` into your console
 
@@ -47,14 +51,14 @@ if (is.na(x_init)) {
     }
 ```
 
-The `control = list(fnsale=-1)` parameter allows us to find the value of the maximum of the function as opposed to the minimum, which is the default behavior of the `optim()` function. By finding the point $x$ that maximizes the function $f$ (i.e. the mode), we ensure that we can initialize the abscissae with points of positive probability.\
+The `control = list(fnscale=-1)` parameter allows us to find the value of the maximum of the function as opposed to the minimum, which is the default behavior of the `optim()` function. By finding the point $x$ that maximizes the function $f$ (i.e. the mode), we ensure that we can initialize the abscissae with points of positive probability.\
 \
 The first task the function carries out is checking the validity of the user inputs. Thus, we implemented checks to ensure that `f` is a function, `n` and `x_init` are numeric, `bounds` is a vector of length two such that the first element is less than the second element (i.e. the lower bound is smaller than the upper bound), and that `x_init` is a point located within the bounds. After passing these initial argument checks, the `ars()` function moves on to defining two simple functions: `h()` and `hprime()`, where both functions take in a point $x$. `h()` returns the value $\log f(x)$ and `hprime()` returns the derivative of this value; that is, $\frac{d}{dx}\log f(x)$, where we used the external package `numDeriv` to compute the derivative. Next, the `ars()` function is broken down into the three steps Gilks and Wild suggest: (1) initialization, (2) sampling, and (3) updating.
 
 
 ### Initialization Step
 
-The basic idea of the initialization step is to initialize the abscissae points, which we define in the function as `Tk`. In order to carry out this step, we define an auxiliary function `initialize_abscissae()`, which uses the `x_init` point as a reference in order to output a vector of $k=20$ initial abscissae points, which we then pass through the functions `h()` and `hprime()`. After defining these 20 initial abscissae points and computing their derivatives, we initialized the functions $u_k(x), s_k(x), l_k(x)$ and calculated the intersection of the tangent lines, $z_j$, for each $x_j$ and $x_{j+1}$, where $j = 1,\dots, k-1$. As described in the paper by Gilks and Wild, we derive the rejection envelope on $T_k$ and calculate the value of every $x_k$ on the rejection envelope, which was done utilizing the function $u_k(x)$. This function first identifies the segment where the inputted value $x$ lies, and calculates the $u_k(x)$ for the corresponding slope and intercept of the piecewise function. We similarly calculate the squeezing function $l_k(x)$ with our function $l_k(x)$. Therefore, we derived both the rejection sampling value and the squeezing value for each point within $T_k$ from $u_k(k)$, and $l_k(x)$, respectively.\
+The basic idea of the initialization step is to initialize the abscissae points, which we define in the function as `Tk`. In order to carry out this step, we define an auxiliary function `initialize_abscissae()`, which uses the `x_init` point as a reference in order to output a vector of $k=20$ initial abscissae points, which we then pass through the functions `h()` and `hprime()`. After defining these 20 initial abscissae points and computing their derivatives, we initialize the functions $u_k(x), s_k(x), l_k(x)$ and calculate the intersection of the tangent lines, $z_j$, for each $x_j$ and $x_{j+1}$, where $j = 1,\dots, k-1$. As described in the paper by Gilks and Wild, we derive the rejection envelope on $T_k$ and calculate the value of every $x_k$ on the rejection envelope, which was done utilizing the function $u_k(x)$. This function first identifies the segment where the inputted value $x$ lies, and calculates the $u_k(x)$ for the corresponding slope and intercept of the piecewise function. We similarly calculate the squeezing function $l_k(x)$ with our function $l_k(x)$. Therefore, we derived both the rejection sampling value and the squeezing value for each point within $T_k$ from $u_k(k)$, and $l_k(x)$, respectively.\
 \
 For $s_k(x)$, we approximate the density function by calculating the area under the piecewise $e^{u_j(x)}$ for each segment $(z_{j},z_{j+1})$, including the bounds the function is defined on as $z_0$ and $z_k$, in order to find the unnormalized probability $q_j$, which takes the following form:
 
@@ -75,7 +79,7 @@ The normalized probability of sampling each segment is derived by dividing each 
 
 ### Sampling Step
 
-We followed the sampling method that Gilks and Wild derived. That is, we first sampled the segment using the probabilities calculated above. Then we sample an $x^*$ with our `sample_sk()` function by applying the inverse CDF of that segment to a sampled draw of $w$ from a $Unif(0, 1)$ distribution which represents the probability that $X$ is less than or equal to $x^*$:
+We followed the sampling method that Gilks and Wild derived. That is, we first sample the segment using the probabilities calculated above. Then we sample an $x^*$ with our `sample_sk()` function by applying the inverse CDF of that segment to a sampled draw of $w$ from a $Unif(0, 1)$ distribution which represents the probability that $X$ is less than or equal to $x^*$:
 
 $$w=P(X\leq x^*) = \frac{\int^{x^*}_{z_j}e^{u_j(x)}dx}{\int^{z_{j+1}}_{z_j}e^{u_j(x)}dx}$$
 where the denominator is the area under the curve of the sampled interval calculated above. Let $\int^{z_{j+1}}_{z_j}e^{u_j(x)}dx = A_j$ for simplicity. For $h'(x_j)\neq0$, we solve for $x^*$ in the equation:
@@ -83,7 +87,7 @@ $$
 \begin{aligned}
 w &= \frac{\int^{x^*}_{z_j}e^{u_j(x)}dx}{A_j} \\
 \implies x^* &= \begin{cases}
-                  \frac{\log(wAh'(x_j)+\exp(u_j(z_j))-h(x_j))}{h'(x_j)} +x_j & \text{if } h'(x_j)\neq 0\\
+                  \frac{\log\left(wAh'(x_j)+e^{u_j(z_j)}-h(x_j)\right)}{h'(x_j)} +x_j & \text{if } h'(x_j)\neq 0\\
                   z_j+w(z_{j+1}-z_j) & \text{if } h'(x_j)=0 
                 \end{cases}
 \end{aligned}
@@ -92,26 +96,28 @@ where the $h'(x_j) = 0$ case is akin to scaling the uniform by the length of the
 \
 We then perform the following tests:\
 \
-First is the squeezing test: if $w\leq e^{l_k(x^*) - u_k(x^*)}$, we add the value $x^*$ to our sample vector. If this is not the case, we move on to the rejection test: if $w\leq e^{h(x^*)-u_k(x^*)}$, we add the value $x^*$ to our sample vector. Otherwise, $x^*$ is rejected. In the event a value of $x^star$ leads us to perform the rejection test, we also complete the updating step, defined in the next section.
+First is the squeezing test: if $w\leq e^{l_k(x^*) - u_k(x^*)}$, we add the value $x^*$ to our sample vector. If this is not the case, we move on to the rejection test: if $w\leq e^{h(x^*)-u_k(x^*)}$, we add the value $x^*$ to our sample vector. Otherwise, $x^*$ is rejected. In the event a value of $x^*$ leads us to perform the rejection test, we also complete the updating step, defined in the next section.
 
 
 ### Updating Step
 
-As just mentioned, if $x^*$ fails the squeezing test, we perform the updating step, which works as follows: we append the value of $x^*$ to our vector $T_k$ such that we now have $T_{k+1}$. We then sort the values of $T_{k+1}$ so they are in ascending order, and compute the $h'(x^*)$, placing it in its analogous location to its position in $T_{k+1}$. We then calculate the new intersection points of the tangent lines in of the points in $T_{k+1}$ and return to the beginning of the sampling step. We complete this process until we have obtained a total of $n$ samples, and the vector of $n$ samples are returned from the `ars()` function to the user.
+As just mentioned, if $x^*$ fails the squeezing test, we perform the updating step, which works as follows: we append the value of $x^*$ to our vector $T_k$ such that we now have $T_{k+1}$. We then sort the values of $T_{k+1}$ so they are in ascending order, and compute $h'(x^*)$, placing it in its analogous location to its position in $T_{k+1}$. We then calculate the new intersection points of the tangent lines in of the points in $T_{k+1}$ and return to the beginning of the sampling step. We complete this process until we have obtained a total of $n$ samples, and the vector of $n$ samples are returned from the `ars()` function to the user.
 
 ## Notes on the Algorithm
 
 While designing the code, one issue we came across was in comparing if two elements in a vector were equal. As a simple example, when trying to see if `x-y==0` for two elements `x` and `y` which were the same, we would sometimes see a result of `FALSE`. We figured out that this was because of a numerical precision error, and our solution to this was to define a tolerance for a margin of error, which we chose to be the square root of Machine Epsilon, or 1e-8, thus rewriting the above check as `abs(x-y)<=1e-8`, which would return `TRUE` as desired. Another issue we came across was in checking that the function `f` that the user provided was indeed a log-concave function by performing checks as our calculations proceeded rather than just checking if the entire function was log-concave at the beginning of our `ars()` function. The way we solved this was to use the definition of log-concavity noted in the Gilks and Wild paper. That is, a function $f(x)$ is log-concave if $h'(x)$ decreases monotonically with increasing $x$. Thus, we defined a function `check_log_concave()` which ensured this condition, using the same strategy to account for numerical precision as mentioned above. Below is the implementation:
 
 ```{r, eval=F}
+check_log_concave <- function(x) {
+  n <- length(x)
 
-  check_log_concave <- function(x){
-    # ensure that h'(x) is decreasing monotonically
-    n <- length(x)
-    assertthat::assert_that(sum(x[2:n] - x[1:n-1] <= 1e-8) == n-1,
-                            msg = "Function is not log-concave")
+  # only one element means log-concave
+  if (n == 1) {
+    return(0)
   }
-
+  assertthat::assert_that(sum(x[2:n] - x[1:(n-1)] <= 1e-8) == n-1,
+                          msg = "Function is not log-concave")
+}
 ```
 
 We ran this function every time we defined new points in $T_k$ (and thus calculated a new $h'(x)$), and this seemed to work in ensuring that the function `f` provided by the user was indeed log-concave.
@@ -122,15 +128,14 @@ We ran this function every time we defined new points in $T_k$ (and thus calcula
 
 # Tests
 
-In order to run our specified set of tests, refer to the following instructions:
-
-**IMPORTANT:** you must 
+In order to run our specified set of tests, refer to the following instructions. Note that you may have to run the tests multiple times to get a 100% pass rate, as our tests rely on the p-value of the Kolmogorov-Smirnov test, so some tests may fail due to stochasticity.
 
 1. In order to test the main `ars()` function: `testthat::test_file("tests/testthat/test-ars.R")`
 
-2. In order to test the auxiliary funtions: `testthat::test_file("tests/testthat/test-ars_functions.R")`
-\
-In order to run the tests for our function, we created an R script which utilized the R package `testthat`. We designed a number of tests in order to ensure that our function works as desired. The first set of tests was designed to ensure that the `ars()` function errors out when the user inputs a non-log-concave function `f`. Some known densities that are not log-concave include the pareto distribution, the t-distribution, and the lognormal distribution. Thus, we inputted these densities as our function `f` to make sure the `ars()` function returned an error. The second set of tests was designed to ensure that the `ars()` function errors out when the user enters invalid inputs. Some example tests we ran were inputting a value for `f` that was not a function and inputting a non-numeric argument for the number of samples `n`. The last set of tests was designed to check that our `ars()` function returned a vector of samples that resembled a vector of samples of the same length from its respective distribution. In order to do this, we implemented the Kolmogorov-Smirnov test. As a basic summary, the Kolmogorov-Smirnov test is a nonparametric test based on the empirical CDF function that tests the equality of samples from a continuous distribution with samples from a reference distribution, given that the distribution is fully specified (i.e. rate, shape, etc. parameters ar provided). The Kolmogorov-Smirnov test statistic is defined as $$ D = \sup_x|F_0(x) - F_{data}(x)|,$$ where $F_0(x)$ is the CDF of the hypothesized distribution ("true" distribution) and $F_{data}(x)$ is the empirical CDF of the observed data (data coming from `ars()`). The null and alternative hypotheses are
+2. In order to test the auxiliary functions: `testthat::test_file("tests/testthat/test-ars_functions.R")`
+
+
+In order to run the tests for our function, we created an R script which utilized the R package `testthat`. We designed a number of tests in order to ensure that our function works as desired. The first set of tests was designed to ensure that the `ars()` function errors out when the user inputs a non-log-concave function `f`. Some known densities that are not log-concave include the pareto distribution, the t-distribution, and the lognormal distribution. Thus, we inputted these densities as our function `f` to make sure the `ars()` function returned an error. The second set of tests was designed to ensure that the `ars()` function errors out when the user enters invalid inputs. Some example tests we ran were inputting a value for `f` that was not a function and inputting a non-numeric argument for the number of samples `n`. The last set of tests was designed to check that our `ars()` function returned a vector of samples that resembled a vector of samples of the same length from its respective distribution. In order to do this, we implemented the Kolmogorov-Smirnov test. As a basic summary, the Kolmogorov-Smirnov test is a nonparametric test based on the empirical CDF function that tests the equality of samples from a continuous distribution with samples from a reference distribution, given that the distribution is fully specified (i.e. rate, shape, etc. parameters are provided). The Kolmogorov-Smirnov test statistic is defined as $$ D = \sup_x|F_0(x) - F_{data}(x)|,$$ where $F_0(x)$ is the CDF of the hypothesized distribution ("true" distribution) and $F_{data}(x)$ is the empirical CDF of the observed data (data coming from `ars()`). The null and alternative hypotheses are
 $$
 \begin{aligned}
 H_0:&\text{ the data comes from the specified distribution}\\
@@ -139,7 +144,7 @@ H_a:&\text{ at least one value does not match the specified distribution}
 $$
 In order to run this test in R, we used the function `ks.test()` and ensured that the obtained p-value was greater than $\alpha = 0.05$. We ran the test on multiple known distributions in R (Normal, Exponential, Beta, Uniform, and Gamma), where we generated a vector of $n$ samples for a known distribution using our `ars()` function, and compared it to a specified "true" distribution, which was a same-length vector of samples from the known distribution using built-in R functions, (`rnorm()`, for example).\
 \
-We also wrote an R script to test that our auxiliary functions were providing reasonable results; namely `check_log_convave()`, `initialize_abscissae()`, `calc_z()`, `u()`, `l()`, `calc_probs()`, and `sample_sk()`. The tests for `check_log_convave()` aimed at targeting vectors with non-decreasing values, and we also included a test case for a vector where every value was the same (as this would still be log-concave). The tests for `initialize_abscissae()` aimed to try each case where the left bound was -Inf, the right bound was Inf, or both bounds were fine, ensuring that a vector of length $k=20$ was properly returned for each test case. For testing `calc_z()`, `u()`, `l()`, `calc_probs()`, and `sample_sk()`, we provided sample values for the functions to perform computations on, and then compared the result of the function with a manual computation carrying out the same task for a variety of test cases. Given that each of these functions work under a "black-box" methodology, the sample values provided were random and contained no real meaning, but were still effective in testing the basic tasks of each function.
+We also wrote an R script to test that our auxiliary functions were providing reasonable results; namely `check_log_convave()`, `initialize_abscissae()`, `calc_z()`, `u()`, `l()`, `calc_probs()`, and `sample_sk()`. The tests for `check_log_convave()` aimed at targeting vectors with non-decreasing values, and we also included a test case for a vector where every value was the same (as this would still be log-concave). The tests for `initialize_abscissae()` aimed to try each case where the left bound was -Inf, the right bound was Inf, or both bounds were finite, ensuring that a vector of length $k=20$ was properly returned for each test case. For testing `calc_z()`, `u()`, `l()`, `calc_probs()`, and `sample_sk()`, we provided sample values for the functions to perform computations on, and then compared the result of the function with a manual computation carrying out the same task for a variety of test cases. Given that each of these functions work under a "black-box" methodology, the sample values provided were random and contained no real meaning, but were still effective in testing the basic tasks of each function.
 
 
 # Examples
@@ -151,13 +156,13 @@ devtools::load_all()
 library(ars)
 ```
 
-### Example 1: Standard Normal
+### Example 1: Normal
 ```{r}
 
-samps <- ars(dnorm, n = 5000, bounds = c(-Inf, Inf), x_init = 1)
-hist(samps, xlab = "x", main = "Samples from a Normal(0, 1) Distribution",
+samps <- ars(function(x){dnorm(x, 10000, 1)}, n = 5000, bounds = c(-Inf, Inf), x_init = 9999)
+hist(samps, xlab = "x", main = "Samples from a Normal(10000, 1) Distribution",
      freq = F)
-curve(dnorm(x), col = "red", add = T)
+curve(dnorm(x, 10000, 1), col = "red", add = T)
 
 ```
 
@@ -171,20 +176,20 @@ curve(dexp(x, 5), col = "red", add = T)
 
 ```
 
-### Example 3: Standard Uniform
+### Example 3: Uniform
 ```{r}
 
-samps <- ars(dunif, n = 5000, bounds = c(0, 1), x_init = 0.5)
+samps <- ars(function(x){dunif(x, 10, 15)}, n = 5000, bounds = c(10, 15), x_init = 11)
 hist(samps, xlab = "x", main = "Samples from a Uniform(0, 1) Distribution",
      freq = F)
-curve(dunif(x), col = "red", add = T)
+curve(dunif(x, 10, 15), col = "red", add = T)
 
 ```
 
 ### Example 4: Beta
 ```{r}
 
-samps <- ars(function(x){dbeta(x, 4, 3)}, n = 5000, bounds = c(0, 1))
+samps <- ars(function(x){dbeta(x, 4, 3)}, n = 5000, bounds = c(-2, 2))
 hist(samps, xlab = "x", main = "Samples from a Beta(4, 3) Distribution",
      freq = F)
 curve(dbeta(x, 4, 3), col = "red", add = T)
@@ -200,6 +205,14 @@ hist(samps, xlab = "x", main = "Samples from a Gamma(4, 3) Distribution",
      freq = F)
 curve(dgamma(x, 4, 3), col = "red", add = T)
 
+```
+
+### Example 6: Logistic
+```{r}
+samps <- ars(dlogis, n = 5000)
+hist(samps, xlab = "x", main = "Samples from a Logistic(0, 1) Distribution",
+     freq = F)
+curve(dlogis(x), col = "red", add = T)
 ```
 
 # Contributions
