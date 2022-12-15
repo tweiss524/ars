@@ -110,51 +110,71 @@ test_that('test that u computes calculations correctly', {
 })
 
 
-# test for l() function
+#Test for l() function
 test_that('test the l function',{
   
-  
-  h_tk <- c(-3.751,-3.682,-3.518)
-  hprime_tk <- c(0.069, 0.062, 0.053)
-  x_1 <- 0.3
-  
   ## case when Tk only has one element.
+  
+  x_1 <- 0.3
+  zk_1 <- c(0.562)
   tk_1 <- c(0.000)
-  zk <- c(0.562)
-  l_1 <- -3.751 + (x_1-0.000)*0.069
-  l_val_1 <- l(x_1,zk,tk_1,h_tk,hprime_tk)
+  h_tk_1 <- c(-3.751,-3.682,-3.518)
+  hprime_tk_1 <- c(0.069,0.062,0.053)
+  
+  l_man_1 <- -3.751 + (x_1-0.000)*0.069
+  l_val_1 <- l(x_1,zk_1,tk_1,h_tk_1,hprime_tk_1)
   
   expect_equal(l_1,l_val_1)
   
   
   ## case when x < Tk[1] or x > Tk[k]
-  tk_2 <- c(0.000,1.052)
+  
   
   x_2 <- -1
+  zk_2 <- c(0.562)
+  tk_2 <- c(0.000,1.052)
+  h_tk_2 <- c(-3.751,-3.682,-3.518)
+  hprime_tk_2 <- c(0.069,0.062,0.053)
+  
   l_2 <- -Inf
-  l_val_2 <- l(x_2,zk,tk_2,h_tk,hprime_tk)
+  l_val_2 <- l(x_2,zk_2,tk_2,h_tk_2,hprime_tk_2)
   expect_equal(l_2,l_val_2)
   
   
   x_3 <- 1.6
+  zk_3 <- c(0.562)
+  tk_3 <- c(0.000,1.052)
+  h_tk_3 <- c(-3.751,-3.682,-3.518)
+  hprime_tk_3 <- c(0.069,0.062,0.053)
+  
   l_3 <- -Inf
-  l_val_3 <- l(x_3,zk,tk_2,h_tk,hprime_tk)
+  l_val_3 <- l(x_3,zk_3,tk_3,h_tk_3,hprime_tk_3)
   expect_equal(l_3,l_val_3)
   
-  ## case when x is on the left hand side of zk but bigger than tk[1]
+  ## case When x is on the left hand side of zk but bigger than tk[1]
+  
   x_4 <- 0.4
+  zk_4 <- c(0.562)
+  tk_4 <- c(0.000,1.052)
+  h_tk_4 <- c(-3.751,-3.682,-3.518)
+  hprime_tk_4 <- c(0.069,0.062,0.053)
+  
   l_4 <- ((1.052-x_4)*(-3.751) + (x_4-0.000)*(-3.682))/(1.052-0.000)
-  l_val_4 <- l(x_4,zk,tk_2,h_tk,hprime_tk)
+  l_val_4 <- l(x_4,zk_4,tk_4,h_tk_4,hprime_tk_4)
   expect_equal(l_4,l_val_4)
   
-  ## case when x is on the right hand side of zk but less than tk[3]
+  ## case When x in [Tk_j,Tk_j+1]
   
-  tk_3 <- c(0.000, 1.052, 2.105)
-  x_5 <- 0.6
-  l_5 <- ((1.679 - x_5)*(-3.682) + (x_5 - 1.052)*(-3.518))/(1.679 - 1.052)
-  l_val_5 <- l(x_5, zk, tk_3, h_tk, hprime_tk)
-  expect_equal(l_5, l_val_5)
   
+  x_5 <- 1.82
+  zk_5 <- c(0.562)
+  tk_5 <- c(0.000,1.052,2.105)
+  h_tk_5 <- c(-3.751,-3.682,-3.518)
+  hprime_tk_5 <- c(0.069,0.062,0.053)
+  
+  l_5 <- ((2.105-x_5)*(-3.682) + (x_5-1.052)*(-3.518))/(2.105-1.052)
+  l_val_5 <- l(x_5,zk,tk_5,h_tk_5,hprime_tk_5)
+  expect_equal(l_5,l_val_5)
   
 })
 
