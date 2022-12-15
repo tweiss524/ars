@@ -1,4 +1,3 @@
-source("Desktop/ars/ars_functions.R")
 
 #' Adaptive Rejection Sampling
 #' 
@@ -39,6 +38,8 @@ source("Desktop/ars/ars_functions.R")
 
 
 ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA) {
+  
+  source("ars_functions.R")
 
   # if no initial point provided, take the mode of the function f as x_init
   if (is.na(x_init)) {
@@ -184,11 +185,7 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA) {
     w <- runif(1)
     
     # squeezing test
-    zk <- calc_z(Tk, h_Tk, hprime_Tk)
-    print("made it before squeezing test")
     if(w <= exp(l(xstar, zk, Tk, h_Tk, hprime_Tk) - u(xstar, zk, Tk, h_Tk, hprime_Tk))) {
-      
-      print("made it in squeezing test")
       
       samps[num_samps] <- xstar
       num_samps <- num_samps + 1
