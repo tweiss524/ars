@@ -4,7 +4,7 @@
 #' 
 #' \code{ars}
 #' 
-#' @description Adaptive Rejection Sampling algorithm for any univariate log-concave function.
+#' @description This function implements an adaptive rejection sampling algorithm to generate n samples from any univariate log-concave function.
 #' 
 #' @author Jeffrey Kuo, Hsiang-Chuan Sha, Tessa Weiss
 #' 
@@ -25,7 +25,9 @@
 #' 
 #' @examples
 #' ## sample 1000 points from a N(0, 1) distribution
-#' ars(dnorm, n = 1000, bounds = c(-10,10), x_init = 1)
+#' ars(dnorm, n = 10, bounds = c(-10,10), x_init = 1)
+#' 
+#' [1] -0.2133253 -2.4711098 -0.3627347 -0.2517910 -1.8091649  0.8678341 -2.0045281 -1.1447111 -2.1649985 -0.4544712
 #' 
 #' ## plot 5000 points from a Gamma(3, 4) distribution
 #' gam_samps <- ars(f = function(x) {dgamma(x, 3, 4)}, n = 5000, bounds = c(0, Inf), x_init = 1)
