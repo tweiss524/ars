@@ -1,0 +1,25 @@
+Package: ars
+Title: Adaptive Rejection Sampling
+Version: 0.0.0.9000
+Authors@R: as.person(c(
+    "Jeffrey Kuo <jrkuo2015@berkeley.edu [aut]",
+    "Hsiang-Chuan Sha <hsiangchuan_sha@berkeley.edu> [aut]",
+    "Tessa Weiss <tweiss@berkeley.edu> [aut, cre]"
+  ))
+Maintainer: Tessa Weiss <tweiss@berkeley.edu>
+Description: Adaptive rejection sampling algorithm to generate n samples from any univariate log-concave probability density function.
+License: None
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.2.3
+Imports:
+    numDeriv,
+    assertthat,
+    stats,
+    rmutil
+Collate:
+  ars_functions.R
+  ars.R
+Suggests: 
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
