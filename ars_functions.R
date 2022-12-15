@@ -132,7 +132,7 @@ l <- function(x, zk, Tk, h_Tk, hprime_Tk) {
 
 # function calc_probs takes as input initial abscissae points Tk, 
 # intersection points zk, h(Tk), h'(Tk), and user-defined bounds
-# and returns a probability vector 
+# and returns a probability vector for sampling xstar
 calc_probs <- function(Tk, zk, h_Tk, hprime_Tk, bounds) {
 
   # appending bounds to zk
@@ -146,6 +146,7 @@ calc_probs <- function(Tk, zk, h_Tk, hprime_Tk, bounds) {
   u_z1 <- u(z_1, zk, Tk, h_Tk, hprime_Tk)
   u_z2 <- u(z_2, zk, Tk, h_Tk, hprime_Tk)
 
+  # area under zj to zj+1
   unnormalized_prob <- exp(u_z1) * (z_2 - z_1)
   unnormalized_prob[z_ind] <- (exp(u_z2[z_ind]) - exp(u_z1[z_ind])) / hprime_Tk[z_ind]
 
@@ -160,7 +161,8 @@ calc_probs <- function(Tk, zk, h_Tk, hprime_Tk, bounds) {
 # function sample_sk takes as input initial abscissae points Tk, 
 # intersection points zk, h(Tk), h'(Tk), and user-defined bounds, and
 # computes the inverse CDF for sampling, giving probability weights
-# based on the probability vector returned from calc_probs()
+# based on the probability vector returned from calc_probs() and
+# returning xstar, which is the sampled point
 sample_sk <- function(Tk, zk, h_Tk, hprime_Tk, bounds) {
 
   z_all <- c(bounds[1], zk, bounds[2])
@@ -174,7 +176,6 @@ sample_sk <- function(Tk, zk, h_Tk, hprime_Tk, bounds) {
   
   # unnormalized
   unnorm_prob <- p[[2]]
-  #prob[(prob <= 0) | (is.na(prob))] <- 0
   u_z1 <- u(z_1, zk, Tk, h_Tk, hprime_Tk)
   i <- sample(length(prob), size = 1, prob = prob)
   unif <- runif(1)

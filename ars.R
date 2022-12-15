@@ -50,8 +50,6 @@
 
 ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA) {
 
-  #source("ars_functions.R")
-
   # if no initial point provided, take the mode of the function f as x_init
   if (is.na(x_init)) {
     x_init <- optim(1, f, method = 'L-BFGS-B', control = list(fnscale=-1))$par
@@ -97,14 +95,12 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA) {
   h <- function(x) {
 
     logf <- log(f(x))
-    #assertthat::assert_that(is.finite(logf), msg = sprintf("Invalid Bounds case logf: %s.", x))
     return(logf)
   }
 
   # function hprime takes x as input and outputs h'(x)
   hprime <- function(x) {
     der <- numDeriv::grad(h, x)
-    #der <- (h(x + 1e-8) - h(x))/1e-8
     return(der)
   }
 
@@ -223,19 +219,4 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA) {
 
   return(samps)
 }
-
-
-#
-#
-# # # testing with normal
-# #
-#test <- ars(f = function(x){dnorm(x, 0, 1)}, n = 1000, x_init = 1, bounds = c(-Inf,Inf))
-# test
-#hist(test)
-#hist(ars(f = function(x){dexp(x, 4)}, n = 100, x_init = 1, bounds= c(0, Inf)), freq = F)
-#
-# getwd()
-#
-# # curve(dgamma(x, 3, 4), 0, add = TRUE, col = "red")
-
 
