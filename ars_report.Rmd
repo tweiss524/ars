@@ -44,11 +44,9 @@ The first task the function carries out is checking the validity of the user inp
 
 ### Initialization Step
 
-The basic idea of the initialization step is to initialize the abscissae points, which we define in the function as `Tk`. In order to carry out this step, we define an auxiliary function `initialize_abscissae()`, which uses the `x_init` point as a reference in order to output a vector of $k=20$ initial abscissae points, which we then pass through the functions `h()` and `hprime()`. After defining these 20 initial abscissae points and computing their derivatives, we initialized the functions $u_k(x), s_k(x), l_k(x)$ and calculated the intersection of the tangent lines, $z_j$, for each $x_j$ and $x_{j+1}$, where $j = 1,\dots, k-1$. As described in the paper by Gilks and Wild, we derive the rejection envelope on `Tk`, and calculate the value of every $x_k$ on the rejection envelope by function `u_k(x)`. The function first identify the segment where the inputted value $x$ lies, and calculate the $u_k(x)$ for the corresponding slope and intercept of the piecewise function. The value from squeezing function performed similarly by the function $l_k(x)$. Therefore we derived the value of both rejection sampling value and the squeezing value for each point within `Tk` from `u_k(k)`, and `l_k(x)` respectively.
-
-For $s_k(x)$ we approximate density function by calculating the area of under the piecewise $\exp(u_j(x))$ for each segment $(z_{j},z_{z+1})$, and get the unnormalized probability $q_j$.
-
-
+The basic idea of the initialization step is to initialize the abscissae points, which we define in the function as `Tk`. In order to carry out this step, we define an auxiliary function `initialize_abscissae()`, which uses the `x_init` point as a reference in order to output a vector of $k=20$ initial abscissae points, which we then pass through the functions `h()` and `hprime()`. After defining these 20 initial abscissae points and computing their derivatives, we initialized the functions $u_k(x), s_k(x), l_k(x)$ and calculated the intersection of the tangent lines, $z_j$, for each $x_j$ and $x_{j+1}$, where $j = 1,\dots, k-1$. As described in the paper by Gilks and Wild, we derive the rejection envelope on $T_k$ and calculate the value of every $x_k$ on the rejection envelope, which was done utilizing the function $u_k(x)$. This function first identifies the segment where the inputted value $x$ lies, and calculates the $u_k(x)$ for the corresponding slope and intercept of the piecewise function. The value from the squeezing function was performed similarly by the function $l_k(x)$. Therefore, we derived both the rejection sampling value and the squeezing value for each point within $T_k$ from $u_k(k)$, and $l_k(x)$, respectively.\
+\
+For $s_k(x)$, we approximate the density function by calculating the area of under the piecewise $\exp(u_j(x))$ for each segment $(z_{j},z_{z+1})$, in order to get the unnormalized probability $q_j$, which takes the following form:
 
 $$ 
 q_j=
@@ -58,7 +56,7 @@ q_j=
   \end{cases}
 $$
 
-The noramlized probability is derived by dividing each $q_j$ wit the summation of all unnormalized probability $A=\sum_{j=1}^nq_j$. The normalized probability, where the true probability we used to sample $x_*$of each segment $(z_j,z_{j+1})$ therefore equals to $$p_j = \frac{q_j}{A}a$$ 
+The normalized probability is derived by dividing each $q_j$ with the summation of all of the unnormalized probabilities $A=\sum_{j=1}^nq_j$. The normalized probability, where the true probability we used to sample $x^*$ of each segment $(z_j,z_{j+1})$ therefore equals to $$p_j = \frac{q_j}{A}a$$ 
 
 
 
@@ -66,7 +64,7 @@ The noramlized probability is derived by dividing each $q_j$ wit the summation o
 
 ### Sampling Step
 
-We use the same method of sampling as Gilks and Wild derive. That is, we sample a $x^*$ from our `sample_sk()` function. first, we sample a point $w$ from a $\mathrm{U}(0, 1)$ distribution which represents the probability of $x$ equals to $x^*$.
+We use the same method of sampling as Gilks and Wild derive. That is, we sample an $x^*$ from our `sample_sk()` function and sample a point $w$ from a $\mathrm{U}(0, 1)$ distribution which represents the probability that $x$ equals to $x^*$:
 
 $$w=P(x=x^*)$$
 
@@ -115,7 +113,7 @@ We ran this function every time we defined new points in $T_k$ (and thus calcula
 
 DESCRIBE HERE HOW TO RUN THE TESTS\
 \
-In order to run the tests for our function, we created an R script called R FILE NAME HERE which utilized the R package `testthat`. We designed a number of tests in order to ensure that our function works as desired. The first set of tests was designed to ensure that the `ars()` function errors out when the user inputs a non-log-concave function `f`. Some known densities that are not log-concave include the pareto distribution, the t-distribution, and the lognormal distribution. Thus, we inputted these densities as our function `f` to make sure the `ars()` function reurned an error. The second set of tests was designed to ensure that the `ars()` function errors out when the user enters invalid inputs. Some example tests we ran were inputting a value for `f` that was not a function and inputting a non-numeric argument for the number of samples `n`. The last set of tests was designed to check that our `ars()` function returned a vector of samples that resembled a vector of samples of the same length from its respective distribution. In order to do this, we implemented the Kolmogorov-Smirnov test. As a basic summary, the Kolmogorov-Smirnov test is a nonparametric test based on the empirical CDF function that tests the equality of samples from a continuous distribution with samples from a reference distribution, given that the distribution is fully specified (i.e. rate, shape, etc. parameters ar provided). The Kolmogorov-Smirnov test statistic is defined as $$ D = \sup_x|F_0(x) - F_{data}(x)|,$$ where $F_0(x)$ is the CDF of the hypothesized distribution ("true" distribution) and $F_{data}(x)$ is the empirical CDF of the observed data (data coming from `ars()`). The null and alternative hypotheses are
+In order to run the tests for our function, we created an R script which utilized the R package `testthat`. We designed a number of tests in order to ensure that our function works as desired. The first set of tests was designed to ensure that the `ars()` function errors out when the user inputs a non-log-concave function `f`. Some known densities that are not log-concave include the pareto distribution, the t-distribution, and the lognormal distribution. Thus, we inputted these densities as our function `f` to make sure the `ars()` function returned an error. The second set of tests was designed to ensure that the `ars()` function errors out when the user enters invalid inputs. Some example tests we ran were inputting a value for `f` that was not a function and inputting a non-numeric argument for the number of samples `n`. The last set of tests was designed to check that our `ars()` function returned a vector of samples that resembled a vector of samples of the same length from its respective distribution. In order to do this, we implemented the Kolmogorov-Smirnov test. As a basic summary, the Kolmogorov-Smirnov test is a nonparametric test based on the empirical CDF function that tests the equality of samples from a continuous distribution with samples from a reference distribution, given that the distribution is fully specified (i.e. rate, shape, etc. parameters ar provided). The Kolmogorov-Smirnov test statistic is defined as $$ D = \sup_x|F_0(x) - F_{data}(x)|,$$ where $F_0(x)$ is the CDF of the hypothesized distribution ("true" distribution) and $F_{data}(x)$ is the empirical CDF of the observed data (data coming from `ars()`). The null and alternative hypotheses are
 $$
 \begin{aligned}
 H_0:&\text{ the data comes from the specified distribution}\\
@@ -124,7 +122,7 @@ H_a:&\text{ at least one value does not match the specified distribution}
 $$
 In order to run this test in R, we used the function `ks.test()` and ensured that the obtained p-value was greater than $\alpha = 0.05$. We ran the test on multiple known distributions in R, where we generated a vector of $n$ samples for a known distribution (for example the Normal distribution) using our `ars()` function, and compared it to a specified "true" distribution, which was a same-length vector of samples from the known distribution using built-in R functions, (`rnorm()`, for example).\
 \
-We also wrote an R script called NAME OF R SCRIPT HERE to test that our auxiliary functions; namely LIST FUNCTIONS HERE. DESCRIBE PROCEDURE ONCE TESTS ARE WRITTEN.
+We also wrote an R script to test that our auxiliary functions were providing reasonable results; namely `check_log_convave()`, `initialize_abscissae()`, `calc_z()`, `u()`, `l()`, `calc_probs()`, and `sample_sk()`. For the majority of these tests, we provided sample values for the functions to perform computations on, and then compared the result of the function with a manual computation carrying out the same task. Given that each of these functions work under a "black-box" methodology, the sample values provided were random and contained no real meaning, but were still effective in testing the basic tasks of each function.
 
 
 # Examples

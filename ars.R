@@ -3,7 +3,7 @@
 #'
 #' \code{ars}
 #'
-#' @description This function implements an adaptive rejection sampling algorithm to generate n samples from any univariate log-concave function.
+#' @description This function implements an adaptive rejection sampling algorithm to generate a vector of samples from any univariate log-concave function.
 #'
 #' @author Jeffrey Kuo, Hsiang-Chuan Sha, Tessa Weiss
 #'
@@ -24,11 +24,12 @@
 #'
 #' @examples
 #' ## sample 1000 points from a N(0, 1) distribution
-#' ars(dnorm, n = 10, bounds = c(-10,10), x_init = 1)
+#' ars(dnorm, n = 1000, bounds = c(-10, 10), x_init = 1)
 #'
 #'
 #' ## plot 5000 points from a Gamma(3, 4) distribution
-#' gam_samps <- ars(f = function(x) {dgamma(x, 3, 4)}, n = 5000, bounds = c(0, Inf), x_init = 1)
+#' func <- function(x) {dgamma(x, 3, 4)}
+#' gam_samps <- ars(f = func, n = 5000, bounds = c(0, Inf), x_init = 1)
 #' hist(gam_samps)
 #'
 #' @importFrom stats runif
@@ -108,39 +109,26 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA) {
 
   ########## INITIALIZING STEP ##########
 
-  Tk <- initialize_abcissae(x_init, hprime, bounds)
-  # print("Tk:")
-  # print(Tk)
+  Tk <- initialize_abscissae(x_init, hprime, bounds)
 
   num_samps <- 1
-  #print("Found absissae")
+  
   h_Tk <- sapply(Tk, h)
-  #print("Found h")
-  # print(h_Tk)
 
   # check whether the function is defined inside bounds by removing infinite log(f(x))
   Tk <- Tk[is.finite(h_Tk)]
   h_Tk <- h_Tk[is.finite(h_Tk)]
   assertthat::assert_that(length(h_Tk) > 0, msg = "Function not defined in bounds")
-  # print("newTk")
-  # print(Tk)
 
+  # derivatives at abscissae
   hprime_Tk <- sapply(Tk, hprime)
-  # print("Found derivative")
-  # print(hprime_Tk)
 
   # remove x such that h'(x) is infinite
   h_Tk <- h_Tk[!is.na(hprime_Tk)]
   Tk <- Tk[!is.na(hprime_Tk)]
   hprime_Tk <- hprime_Tk[!is.na(hprime_Tk)]
 
-  # print("hprime_Tk:")
-  # print(hprime_Tk)
-  #print(sum(abs(hprime_Tk[2:length(hprime_Tk)] - hprime_Tk[1:(length(hprime_Tk) -1)]) <=  1e-8)  == (length(hprime_Tk)-1))
-
-
   # handle the case when hprime_Tk are all equal to a constant (same value)
-
   len_hptk <- length(hprime_Tk)
 
   if (sum(abs(hprime_Tk[2:len_hptk] - hprime_Tk[1:(len_hptk-1)]) <=  1e-8)  == (len_hptk - 1)) {
@@ -164,8 +152,6 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA) {
 
 
   zk <- calc_z(Tk, h_Tk, hprime_Tk)
-  # print("zk:")
-  # print(zk)
 
 
   ########## SAMPLING STEP ##########
@@ -174,17 +160,7 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA) {
 
     # sample xstar from sk
     xstar <- sample_sk(Tk, zk, h_Tk, hprime_Tk, bounds)
-    #print(paste("xstar:", xstar))
-    #print(paste("l:", l(xstar, Tk, h_Tk, hprime_Tk) ))
-    #print(paste("h:", h(xstar)))
-    # print(zk)
-    # print(Tk)
-    #print(paste("u", u(xstar, zk, Tk, h_Tk, hprime_Tk)))
-    # print("zk")
-    # print(zk)
     assertthat::assert_that((xstar >= bounds[1]) && (xstar <= bounds[2]), msg = "sampled xstar not in bounds")
-    #zk <- sort(zk)
-    #assertthat::assert_that((l(xstar, Tk, h_Tk, hprime_Tk) <= h(xstar)) && (h(xstar) <= u(xstar, zk, Tk, h_Tk, hprime_Tk)), msg = "lhu test: Not log concave")
     w <- runif(1)
 
     # squeezing test
@@ -196,6 +172,7 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA) {
 
     # rejection test
     else {
+      
       h_xstar <- h(xstar)
       if(!is.finite(h_xstar)) { break }
       hprime_xstar <- hprime(xstar)
@@ -204,6 +181,7 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA) {
       ########## UPDATING STEP ##########
 
       if (w <= exp(h_xstar - u(xstar, zk, Tk, h_Tk, hprime_Tk))) {
+        
         samps[num_samps] <- xstar
         num_samps <- num_samps + 1
       }
@@ -219,14 +197,15 @@ ars <- function(f, n = 1000, bounds = c(-Inf, Inf), x_init = NA) {
       hprime_Tk <- hprime_Tk[!is.na(hprime_Tk)]
 
       # check the behavior of hprime_Tk
-
       len_hptk_new <- length(hprime_Tk)
-      if(sum(abs(hprime_Tk[2:len_hptk_new] - hprime_Tk[1:(len_hptk_new-1)]) <=  1e-8)  == (len_hptk_new-2)){
+      if(sum(abs(hprime_Tk[2:len_hptk_new] - hprime_Tk[1:(len_hptk_new-1)]) <=  1e-8)  == (len_hptk_new-2)) {
+        
         hprime_Tk <- as.integer(round(hprime_Tk))
-        ind <- c(which(hprime_Tk == unique(hprime_Tk)[1])[1],which(hprime_Tk == unique(hprime_Tk)[2])[1])
+        ind <- c(which(hprime_Tk == unique(hprime_Tk)[1])[1], which(hprime_Tk == unique(hprime_Tk)[2])[1])
         hprime_Tk <- hprime_Tk[ind]
         Tk <- Tk[ind]
         h_Tk <- h_Tk[ind]
+        
       }
 
       check_log_concave(hprime_Tk)
