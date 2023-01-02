@@ -1,0 +1,57 @@
+Grade: 94
+
+## ease of accessing package, help, tests:
+
+Fine.
+
+## main help page:
+
+Fine.
+
+## quality of user interface:
+
+Good, in particular defaults make sense.
+But doesn't allow user to provide a vector of x_init values, which would be good as an option.
+
+## performance on my tests:
+
+Very good, though some difficulties with initialization if initial value not provided.
+
+## t density output:
+
+Detects non log-concavity but fails if x_init not provided.
+
+## presence of tests:
+
+Tests run but 1 of them fails.
+
+── Error (test-ars.R:45): provides samples close to actual distribution ────────
+Error in `ks.test.default(nor_ars, true_nor)`: not enough 'x' data
+
+Good overall tests of main function. Extensive unit tests.
+
+## code efficiency:
+
+0.5 sec. for 5000 samples
+
+## comments in code:
+
+Good.
+
+## code organization/clarity/elegance:
+
+Generally easy to follow.
+
+Optimization should be done on log scale. (see comment about initialization above)
+
+Envelope calculation is vectorized.
+
+You should only recalculate the probs when a point is added to abscissae.
+
+## equality of workload:
+
+Good.
+
+## writeup:
+
+Clear and detailed. Good set of examples/tests.
