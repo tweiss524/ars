@@ -73,5 +73,4 @@ To view examples of the final product, refer to the last section of [ars_report.
 
 # References
 
-[1] Gilks, W. R., & Wild, P. (1992). Adaptive rejection sampling for Gibbs sampling.
-\emph{Journal of the Royal Statistical Society: Series C (Applied Statistics)}, 41(2), 337-348.
+[1] Gilks, W. R., & Wild, P. (1992). Adaptive rejection sampling for Gibbs sampling. Journal of the Royal Statistical Society: Series C (Applied Statistics), 41(2), 337-348.
