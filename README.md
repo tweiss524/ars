@@ -37,7 +37,7 @@ sampling. Requirement of the argument is that it is a single point defined withi
 
 The first task the function carries out is checking the validity of the user inputs. After passing these initial argument checks, the `ars()` function moves on to defining two simple functions: `h()` and `hprime()`, where both functions take in a point $x$. `h()` returns the value $\log f(x)$ and `hprime()` returns the derivative of this value; that is, $\frac{d}{dx}\log f(x)$, where we used the external package `numDeriv` to compute the derivative. Next, the `ars()` function is broken down into the three steps Gilks and Wild suggest: (1) initialization, (2) sampling, and (3) updating.
 
-# Initialization Step
+## Initialization Step
 
 The basic idea of the initialization step is to initialize the abscissae points, which we define in the function as $T_k$. In order to carry out this step, we define an auxiliary function `initialize_abscissae()`, which uses the `x_init` point as a reference in order to output a vector of $k = 20$ initial abscissae points. After defining these 20 initial abscissae points and computing their derivatives, we initialize the functions $u_k(x)$, $s_k(x)$, $l_k(x)$ and calculate the intersection of the tangent lines, $z_j$, for each $x_j$ and $x_{j+1}$, where $j = 1,\dots, k − 1$. As described in the paper by Gilks and Wild, we derive the rejection envelope on $T_k$ and calculate the value of every $x_k$ on the rejection envelope, which was done utilizing the function $u_k(x)$. This function first identifies the segment where the inputted value $x$ lies, and calculates the $u_k(x)$ for the corresponding slope and intercept of the piecewise function. We similarly calculate the squeezing function $l_k(x)$ with our function $l_k(x)$. Therefore, we derived both the rejection sampling value and the squeezing value for each point within $T_k$ from $u_k(k)$, and $l_k(x)$, respectively. For $s_k(x)$, we approximate the density function by calculating the area under the piecewise $e^{u_j(x)}$ for each segment $(z_j, z_{j+1})$, including the bounds the function is defined on as $z_0$ and $z_k$, in order to find the unnormalized probability $q_j$ , which takes the following form:
 
@@ -55,13 +55,13 @@ $$
 
 The normalized probability of sampling each segment is derived by dividing each $q_j$ with the summation of all of the unnormalized probabilities $\sum\limits_{j=1}^{k+1}q_j$. The probability to sample each interval $(z_j,z_{j+1})$ is therefore equal to $$p_j = \frac{q_j}{\sum\limits_{j=1}^{k+1}q_j}$$ 
 
-# Sampling Step
+## Sampling Step
 
 We followed the sampling method that Gilks and Wild derived. That is, we first sample the segment using the probabilities calculated above. Then we sample an $x^\*$ by applying the inverse CDF of that segment to a sampled draw of $w$ from a $Unif(0, 1)$ distribution which represents the probability that $X$ is less than or equal to $x^\*$.
 
 We then perform the squeezing test, and if this fails, we perform the rejection test. In the event that a value of $x^\*$ leads us to perform the rejection test, we also complete the updating step, defined in the next section. More details of the squeezing and rejection tests are described in [ars_report.pdf](report/ars_report.pdf).
 
-# Updating Step
+## Updating Step
 
 The updating step works as follows: we append the value of $x^\*$ to our vector $T_k$ such that we now have $T_{k+1}$. We then sort the values of $T_{k+1}$ so they are in ascending order, and compute $h'(x^\*)$, placing it in its analogous location to its position in $T_{k+1}$. We then calculate the new intersection points of the tangent lines in of the points in $T_{k+1}$ and return to the beginning of the sampling step. We complete this process until we have obtained a total of $n$ samples, and the vector of $n$ samples are returned from the `ars()` function to the user.
 
