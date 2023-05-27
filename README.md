@@ -6,7 +6,7 @@ The following paragraphs give a brief run-through of the contents of this reposi
 
 # Introduction
 
-This project aims to create an `R` package called ars that simulates the adaptive rejection sampling algorithm described in the paper Adaptive Rejection Sampling for Gibbs Sampling by W.R. Gilks and P Wild. In this paper, Gilks and Wild propose a method for rejection sampling which is valid for any univariate, log-concave probability density function. As part of this project, we created a main file called `ars.R` which contained the main `ars()` function used to calculate and produce the samples, with helper functions to complete each step in the algorithm defined in `ars_functions.R`.
+This project aims to create an `R` package called ars that simulates the adaptive rejection sampling algorithm described in the paper Adaptive Rejection Sampling for Gibbs Sampling by W.R. Gilks and P Wild. In this paper, Gilks and Wild propose a method for rejection sampling which is valid for any univariate, log-concave probability density function. As part of this project, we created a main file called [`ars.R`](R/ars.R) which contained the main `ars()` function used to calculate and produce the samples, with helper functions to complete each step in the algorithm defined in [`ars_functions.R`](R/ars_functions.R).
 
 # Package Installation
 
