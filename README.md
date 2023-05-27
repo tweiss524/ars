@@ -6,7 +6,7 @@ The following paragraphs give a brief run-through of the contents of this reposi
 
 # Introduction
 
-This project aims to create an `R` package called ars that simulates the adaptive rejection sampling algorithm described in the paper Adaptive Rejection Sampling for Gibbs Sampling by W.R. Gilks and P Wild. In this paper, Gilks and Wild propose a method for rejection sampling which is valid for any univariate, log-concave probability density function. As part of this project, we created a main file called [`ars.R`](R/ars.R) which contained the main `ars()` function used to calculate and produce the samples, with helper functions to complete each step in the algorithm defined in [`ars_functions.R`](R/ars_functions.R).
+This project aims to create an `R` package called ars that simulates the adaptive rejection sampling algorithm described in the paper Adaptive Rejection Sampling for Gibbs Sampling by W.R. Gilks and P Wild. In this paper, Gilks and Wild propose a method for rejection sampling which is valid for any univariate, log-concave probability density function. As part of this project, we created a main file called [ars.R](R/ars.R) which contained the main `ars()` function used to calculate and produce the samples, with helper functions to complete each step in the algorithm defined in [ars_functions.R](R/ars_functions.R).
 
 # Package Installation
 
@@ -18,7 +18,7 @@ In order to install the package in RStudio, refer to the following instructions.
 
 # Methods
 
-The main function to calculate and produce the samples is called `ars()`. For purposes of organization and readability, we decided to use a functional programming approach where we defined a number of auxiliary functions to complete subtasks of the `ars()` function, and wrote all of these functions in a separate `R` script entitled [`ars_functions.R`](R/ars_functions.R). The main `ars()` function takes in the following inputs from the user:
+The main function to calculate and produce the samples is called `ars()`. For purposes of organization and readability, we decided to use a functional programming approach where we defined a number of auxiliary functions to complete subtasks of the `ars()` function, and wrote all of these functions in a separate `R` script entitled [ars_functions.R](R/ars_functions.R). The main `ars()` function takes in the following inputs from the user:
 - `f`: The density function from which the user wants to sample from. Requirement of the argument is that it must be a univariate, log-concave function.
 - `n`: The number of samples the user wants to generate from the function `f`. Requirement of the argument is that it must be a positive integer value.
 - `bounds`: denotes the left and right bounds of the domain of the function `f`, which is the set of points $x$
