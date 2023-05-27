@@ -45,7 +45,7 @@ q_j=
   \end{cases}
 $$
 
-The normalized probability of sampling each segment is derived by dividing each $q_j$ with the summation of all of the unnormalized probabilities $\limits_{j=1}^{k+1}q_j$. The probability to sample each interval $(z_j,z_{j+1})$ is therefore equal to $$p_j = \frac{q_j}{\sum\limits_{j=1}^{k+1}q_j}$$ 
+The normalized probability of sampling each segment is derived by dividing each $q_j$ with the summation of all of the unnormalized probabilities $\sum\limits_{j=1}^{k+1}q_j$. The probability to sample each interval $(z_j,z_{j+1})$ is therefore equal to $$p_j = \frac{q_j}{\sum\limits_{j=1}^{k+1}q_j}$$ 
 
 # Sampling Step
 
