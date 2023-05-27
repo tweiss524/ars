@@ -45,13 +45,14 @@ q_j=
   \end{cases}
 $$
 
-The normalized probability of sampling each segment is derived by dividing each $q_j$ with the summation of all of the unnormalized probabilities $\sum_{j=1}^{k+1}q_j$. The probability to sample each interval $(z_j,z_{j+1})$ is therefore equal to $$p_j = \frac{q_j}{\sum_{j=1}^{k+1}q_j}$$ 
+The normalized probability of sampling each segment is derived by dividing each $q_j$ with the summation of all of the unnormalized probabilities $\limits_{j=1}^{k+1}q_j$. The probability to sample each interval $(z_j,z_{j+1})$ is therefore equal to $$p_j = \frac{q_j}{\sum\limits_{j=1}^{k+1}q_j}$$ 
 
 # Sampling Step
 
 We followed the sampling method that Gilks and Wild derived. That is, we first sample the segment using the probabilities calculated above. Then we sample an $x^*$ with our `sample_sk()` function by applying the inverse CDF of that segment to a sampled draw of $w$ from a $Unif(0, 1)$ distribution which represents the probability that $X$ is less than or equal to $x^*$:
 
 $$w=P(X\leq x^*) = \frac{\int^{x^*}_{z_j}e^{u_j(x)}dx}{\int^{z_{j+1}}_{z_j}e^{u_j(x)}dx}$$
+
 where the denominator is the area under the curve of the sampled interval calculated above. Let $\int^{z_{j+1}}_{z_j}e^{u_j(x)}dx = A_j$ for simplicity. For $h'(x_j)\neq0$, we solve for $x^*$ in the equation:
 $$
 \begin{aligned}
