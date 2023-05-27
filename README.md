@@ -4,6 +4,10 @@ This project was completed in collaboration with Jeffrey Kuo and Hsiang-Chuan Sh
 
 The following paragraphs give a brief run-through of the contents of this repository. A more detailed version of the steps is written in [ars_report.pdf](report/ars_report.pdf).
 
+# Introduction
+
+This project aims to create an `R` package called ars that simulates the adaptive rejection sampling algorithm described in the paper Adaptive Rejection Sampling for Gibbs Sampling by W.R. Gilks and P Wild. In this paper, Gilks and Wild propose a method for rejection sampling which is valid for any univariate, log-concave probability density function. As part of this project, we created a main file called `ars.R` which contained the main `ars()` function used to calculate and produce the samples, with helper functions to complete each step in the algorithm defined in `ars_functions.R`.
+
 # Package Installation
 
 In order to install the package in RStudio, refer to the following instructions. Note that required packages are `assertthat`, `numDeriv`, `stats`, `rmutil`, and `testthat`. Also remember to clean your environment before installing the package to ensure there are no errors with installation.
@@ -11,10 +15,6 @@ In order to install the package in RStudio, refer to the following instructions.
 2. set your working directory in RStudio to the `ars` directory you just cloned
 3. type `devtools::load_all()` into your console
 4. `library(ars)`
-
-# Introduction
-
-This project aims to create an `R` package called ars that simulates the adaptive rejection sampling algorithm described in the paper Adaptive Rejection Sampling for Gibbs Sampling by W.R. Gilks and P Wild. In this paper, Gilks and Wild propose a method for rejection sampling which is valid for any univariate, log-concave probability density function. As part of this project, we created a main file called `ars.R` which contained the main ars() function used to calculate and produce the samples, with helper functions to complete each step in the algorithm defined in `ars_functions.R`.
 
 # Methods
 
@@ -27,7 +27,7 @@ for which $f(x) > 0$. Requirement of the argument is that it be a vector of leng
 - `x_init`: The initial point within the bounds used as one of the initial abscissae points for future
 sampling. Requirement of the argument is that it is a single point defined within the bounds.
 
-The first task the function carries out is checking the validity of the user inputs. After passing these initial argument checks, the `ars()` function moves on to defining two simple functions: `h()` and `hprime()`, where both functions take in a point $x$. `h()` returns the value $\log f(x)$ and `hprime()` returns the derivative of this value; that is, $\frac{d}{dx}\log f(x)$, where we used the external package numDeriv to compute the derivative. Next, the `ars()` function is broken down into the three steps Gilks and Wild suggest: (1) initialization, (2) sampling, and (3) updating.
+The first task the function carries out is checking the validity of the user inputs. After passing these initial argument checks, the `ars()` function moves on to defining two simple functions: `h()` and `hprime()`, where both functions take in a point $x$. `h()` returns the value $\log f(x)$ and `hprime()` returns the derivative of this value; that is, $\frac{d}{dx}\log f(x)$, where we used the external package `numDeriv` to compute the derivative. Next, the `ars()` function is broken down into the three steps Gilks and Wild suggest: (1) initialization, (2) sampling, and (3) updating.
 
 # Initialization Step
 
@@ -50,8 +50,9 @@ The normalized probability of sampling each segment is derived by dividing each 
 # Sampling Step
 
 We followed the sampling method that Gilks and Wild derived. That is, we first sample the segment using the probabilities calculated above. Then we sample an $x^\*$ with our `sample_sk()` function by applying the inverse CDF of that segment to a sampled draw of $w$ from a $Unif(0, 1)$ distribution which represents the probability that $X$ is less than or equal to $x^\*$:
-$$w = \mathbb{P}(X\leq x^\*) = \frac{\int^{x^\*}_{z_j}e^{u_j(x)}dx}{\int^{z_{j+1}}_{z_j}e^{u_j(x)}dx}$$
-where the denominator is the area under the curve of the sampled interval calculated above. Let $\int^{z_{j+1}}_{z_j}e^{u_j(x)}dx = A_j$ for simplicity. For $h'(x_j)\neq0$, we solve for $x^\*$ in the equation:
+
+$$ w = \mathbb{P}(X\leq x^\*) = \frac{\int^{x^\*}_ {z_j}e^{u_ j(x)}dx}{\int^{z_ {j+1}}_ {z_ j}e^{u_ j(x)}dx} $$
+where the denominator is the area under the curve of the sampled interval calculated above. Let $\int^{z_ {j+1}}_ {z_ j}e^{u_ j(x)}dx = A_j$ for simplicity. For $h'(x_j)\neq 0$, we solve for $x^\*$ in the equation:
 $$
 \begin{aligned}
 w &= \frac{\int^{x^\*}_{z_j}e^{u_j(x)}dx}{A_j} \\
