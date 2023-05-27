@@ -49,9 +49,11 @@ The normalized probability of sampling each segment is derived by dividing each 
 
 # Sampling Step
 
-We followed the sampling method that Gilks and Wild derived. That is, we first sample the segment using the probabilities calculated above. Then we sample an $x^\*$ with our `sample_sk()` function by applying the inverse CDF of that segment to a sampled draw of $w$ from a $Unif(0, 1)$ distribution which represents the probability that $X$ is less than or equal to $x^\*$:
+We followed the sampling method that Gilks and Wild derived. That is, we first sample the segment using the probabilities calculated above. Then we sample an $x^\*$ by applying the inverse CDF of that segment to a sampled draw of $w$ from a $Unif(0, 1)$ distribution which represents the probability that $X$ is less than or equal to $x^\*$:
 
-$$ w = \mathbb{P}(X\leq x^\*) = \frac{\int^{x^\*}_ {z_j}e^{u_ j(x)}dx}{\int^{z_ {j+1}}_ {z_ j}e^{u_ j(x)}dx} $$
+$$ 
+w = \mathbb{P}(X\leq x^\*) = \frac{\int^{x^\*}_ {z_j}e^{u_ j(x)}dx}{\int^{z_ {j+1}}_ {z_ j}e^{u_ j(x)}dx}
+$$
 where the denominator is the area under the curve of the sampled interval calculated above. Let $\int^{z_ {j+1}}_ {z_ j}e^{u_ j(x)}dx = A_j$ for simplicity. For $h'(x_j)\neq 0$, we solve for $x^\*$ in the equation:
 $$
 \begin{aligned}
@@ -64,16 +66,14 @@ w &= \frac{\int^{x^\*}_{z_j}e^{u_j(x)}dx}{A_j} \\
 $$
 where the $h'(x_j) = 0$ case is akin to scaling the uniform by the length of the interval.\
 \
-We then perform the following tests:\
-\
-First is the squeezing test: if $w\leq e^{l_k(x^\*) - u_k(x^\*)}$, we add the value $x^\*$ to our sample vector. If this is not the case, we move on to the rejection test: if $w\leq e^{h(x^\*)-u_k(x^\*)}$, we add the value $x^\*$ to our sample vector. Otherwise, $x^\*$ is rejected. In the event a value of $x^\*$ leads us to perform the rejection test, we also complete the updating step, defined in the next section.
-
+We then perform the squeezing test, and if this fails, we perform the rejection test. In the event that a value of $x^\*$ leads us to perform the rejection test, we also complete the updating step, defined in the next section. More details of the squeezing and rejection tests are described in [ars_report.pdf](report/ars_report.pdf).
 
 # Updating Step
 
-As just mentioned, if $x^\*$ fails the squeezing test, we perform the updating step, which works as follows: we append the value of $x^\*$ to our vector $T_k$ such that we now have $T_{k+1}$. We then sort the values of $T_{k+1}$ so they are in ascending order, and compute $h'(x^\*)$, placing it in its analogous location to its position in $T_{k+1}$. We then calculate the new intersection points of the tangent lines in of the points in $T_{k+1}$ and return to the beginning of the sampling step. We complete this process until we have obtained a total of $n$ samples, and the vector of $n$ samples are returned from the `ars()` function to the user.
+The updating step works as follows: we append the value of $x^\*$ to our vector $T_k$ such that we now have $T_{k+1}$. We then sort the values of $T_{k+1}$ so they are in ascending order, and compute $h'(x^\*)$, placing it in its analogous location to its position in $T_{k+1}$. We then calculate the new intersection points of the tangent lines in of the points in $T_{k+1}$ and return to the beginning of the sampling step. We complete this process until we have obtained a total of $n$ samples, and the vector of $n$ samples are returned from the `ars()` function to the user.
 
 # Tests
+
 In order to run our specified set of tests, refer to the following instructions.
 1. In order to test the main ars() function: testthat::test_file("tests/testthat/test-ars.R")
 2. In order to test the auxiliary functions: testthat::test_file("tests/testthat/test-ars_functions.R")
